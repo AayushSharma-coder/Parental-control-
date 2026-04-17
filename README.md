@@ -4,4 +4,4 @@ This is a parental control app.the full version isn't given only the UI is given
 
 ![image alt](https://github.com/AayushSharma-coder/Parental-control-/blob/226b3f021dc01107b175927e59b8888f5eef83b8/Parental%20control%20app%203.png)
 
-![image alt](https://github.com/AayushSharma-coder/Parental-control-/blob/545e00b73a2641dce09dc91f34f54c9b91df75cc/Parental%20control%20app%203.png)
+![image alt](https://github.com/AayushSharma-coder/Parental-control-/blob/d9ff382e08c5222e0ddff6853263da8c1ffe67b2/Parental%20control%20app%202.png)
