@@ -1,0 +1,2450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FamilyShield — Parental Controls</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:ital,wght%400,300;0,400;0,500;0,600;0,700&amp;family=DM+Mono:ital,wght%400,400;0,500&amp;display=swap" rel="stylesheet" data-cfasync="false">
+<style>
+:root{--bg:#0d1117;--surface:#161b22;--surface2:#1e2530;--border:#30363d;--accent:#3fb950;--accent2:#58a6ff;--warn:#f0883e;--danger:#f85149;--text:#e6edf3;--muted:#7d8590;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Sora',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column;}
+
+/* ── HEADER ── */
+.top-header{position:fixed;top:0;left:0;right:0;height:60px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 16px;z-index:200;}
+.logo{display:flex;align-items:center;gap:8px;}
+.logo-icon{width:30px;height:30px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;}
+.logo-text{font-size:14px;font-weight:700;letter-spacing:-.3px;}
+.child-switcher{display:flex;align-items:center;gap:5px;overflow-x:auto;max-width:calc(100vw - 140px);padding-bottom:2px;}
+.child-switcher::-webkit-scrollbar{display:none;}
+.h-pill{display:flex;align-items:center;gap:5px;padding:4px 6px 4px 5px;border-radius:999px;border:1px solid transparent;transition:all .15s;background:transparent;flex-shrink:0;}
+.h-pill.selected{background:rgba(63,185,80,.12);border-color:rgba(63,185,80,.3);}
+.h-pill-name{display:flex;align-items:center;gap:5px;cursor:pointer;-webkit-tap-highlight-color:transparent;}
+.avatar{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;color:white;}
+.pill-name{font-size:11px;font-weight:500;color:var(--muted);}
+.h-pill.selected .pill-name{color:var(--text);}
+.mini-sw{width:28px;height:16px;background:var(--border);border-radius:999px;position:relative;cursor:pointer;transition:background .2s;flex-shrink:0;}
+.mini-sw.on{background:var(--accent);}
+.mini-sw::after{content:'';position:absolute;width:10px;height:10px;background:white;border-radius:50%;top:3px;left:3px;transition:left .2s;}
+.mini-sw.on::after{left:15px;}
+
+/* ── BOTTOM NAV ── */
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;height:64px;background:var(--surface);border-top:1px solid var(--border);display:flex;align-items:stretch;z-index:200;padding-bottom:env(safe-area-inset-bottom);}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;color:var(--muted);transition:color .15s;border-top:2px solid transparent;padding:8px 4px 4px;-webkit-tap-highlight-color:transparent;user-select:none;}
+.nav-item:active{background:rgba(255,255,255,.04);}
+.nav-item.active{color:var(--accent);border-top-color:var(--accent);}
+.nav-item .icon{font-size:19px;line-height:1;}
+.nav-item .label{font-size:9px;font-weight:500;letter-spacing:.2px;white-space:nowrap;}
+
+/* ── LAYOUT ── */
+.main{flex:1;padding:76px 16px 76px;}
+.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+.page-title{font-size:20px;font-weight:700;letter-spacing:-.5px;}
+.page-sub{font-size:12px;color:var(--muted);margin-top:2px;}
+
+/* ── BUTTONS ── */
+.btn{padding:8px 14px;border-radius:8px;border:none;font-family:'Sora',sans-serif;font-size:12px;font-weight:500;cursor:pointer;transition:all .15s;}
+.btn-outline{background:transparent;border:1px solid var(--border);color:var(--text);}
+.btn-outline:hover{background:rgba(255,255,255,.06);}
+.btn-primary{background:var(--accent);color:#0d1117;}
+.btn-primary:hover{background:#4cc85a;}
+.btn-danger{background:var(--danger);color:white;}
+
+/* ── STATS ── */
+.stats-row{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:12px;}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;}
+.stat-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;}
+.stat-value{font-size:24px;font-weight:700;letter-spacing:-1px;font-family:'DM Mono',monospace;}
+.stat-sub{font-size:11px;color:var(--muted);margin-top:4px;}
+.stat-badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;padding:3px 7px;border-radius:20px;margin-top:7px;font-weight:500;}
+.badge-green{background:rgba(63,185,80,.15);color:var(--accent);}
+.badge-warn{background:rgba(240,136,62,.15);color:var(--warn);}
+.badge-red{background:rgba(248,81,73,.15);color:var(--danger);}
+.badge-blue{background:rgba(88,166,255,.15);color:var(--accent2);}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;}
+.grid-3{display:grid;grid-template-columns:1fr;gap:12px;margin-bottom:12px;}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:12px;}
+.card:last-child{margin-bottom:0;}
+.card-title{font-size:13px;font-weight:600;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;}
+.card-title-text{display:flex;align-items:center;gap:6px;}
+.card-action{font-size:12px;color:var(--accent2);cursor:pointer;font-weight:400;}
+
+/* ── TIME BARS ── */
+.time-bar-wrap{margin-bottom:12px;}
+.time-bar-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;}
+.time-bar-app{font-size:13px;display:flex;align-items:center;gap:8px;}
+.app-icon{width:22px;height:22px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;}
+.time-bar-time{font-size:12px;color:var(--muted);font-family:'DM Mono',monospace;}
+.time-bar-bg{height:6px;background:var(--surface2);border-radius:999px;overflow:hidden;}
+.time-bar-fill{height:100%;border-radius:999px;transition:width .6s ease;}
+
+/* ── TOGGLE ITEMS ── */
+.toggle-list{display:flex;flex-direction:column;gap:10px;}
+.toggle-item{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:var(--surface2);border-radius:10px;border:1px solid var(--border);}
+.toggle-info{display:flex;align-items:center;gap:10px;}
+.toggle-icon{font-size:18px;}
+.toggle-name{font-size:13px;font-weight:500;}
+.toggle-desc{font-size:11px;color:var(--muted);margin-top:1px;}
+.switch{width:40px;height:22px;background:var(--border);border-radius:999px;position:relative;cursor:pointer;transition:background .2s;flex-shrink:0;}
+.switch.on{background:var(--accent);}
+.switch::after{content:'';position:absolute;width:16px;height:16px;background:white;border-radius:50%;top:3px;left:3px;transition:left .2s;}
+.switch.on::after{left:21px;}
+
+/* ── ALERTS ── */
+.alert-item{display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid var(--border);}
+.alert-item:last-child{border-bottom:none;padding-bottom:0;}
+.alert-dot{width:8px;height:8px;border-radius:50%;margin-top:5px;flex-shrink:0;}
+.alert-msg{font-size:13px;line-height:1.5;}
+.alert-time{font-size:11px;color:var(--muted);margin-top:2px;font-family:'DM Mono',monospace;}
+
+/* ── LOCATION ── */
+.location-map{background:var(--surface2);border:1px solid var(--border);border-radius:10px;height:160px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;margin-bottom:12px;}
+.map-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.03) 1px,transparent 1px);background-size:24px 24px;}
+.map-pin{width:14px;height:14px;background:var(--accent);border-radius:50%;border:2px solid white;box-shadow:0 0 0 6px rgba(63,185,80,.25);position:relative;z-index:1;animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 4px rgba(63,185,80,.3);}50%{box-shadow:0 0 0 10px rgba(63,185,80,.05);}}
+.location-label{font-size:13px;font-weight:500;}
+.location-sub{font-size:11px;color:var(--muted);margin-top:2px;}
+
+/* ── MINI CHART ── */
+.mini-chart{display:flex;align-items:flex-end;gap:4px;height:60px;margin-top:8px;}
+.chart-bar{flex:1;border-radius:4px 4px 0 0;}
+.chart-labels{display:flex;gap:4px;margin-top:4px;}
+.chart-label{flex:1;text-align:center;font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;}
+
+/* ── SECTIONS ── */
+.section{display:none;}
+.section.active{display:block;animation:fadeIn .22s ease;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+
+/* ── CHILDREN MGMT ── */
+.child-mgr-row{display:flex;align-items:center;justify-content:space-between;padding:11px 14px;background:var(--surface2);border-radius:10px;border:1px solid var(--border);margin-bottom:8px;}
+.child-mgr-left{display:flex;align-items:center;gap:10px;cursor:pointer;flex:1;}
+.child-mgr-avatar{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:white;flex-shrink:0;}
+.child-mgr-name{font-size:13px;font-weight:500;}
+.child-mgr-sub{font-size:11px;color:var(--muted);}
+.add-child-form{display:none;padding:14px;background:var(--surface2);border-radius:10px;border:1px solid var(--border);margin-bottom:8px;}
+.add-child-form.show{display:block;}
+.add-child-form input{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--text);font-family:'Sora',sans-serif;font-size:13px;outline:none;margin-bottom:10px;}
+.add-child-form input:focus{border-color:var(--accent);}
+.empty-children{text-align:center;padding:24px 0;color:var(--muted);font-size:13px;}
+.empty-children .empty-icon{font-size:32px;margin-bottom:8px;}
+
+/* ── SCREEN TIME ── */
+.st-perm-heading{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px;gap:10px;}
+.st-perm-title{font-size:17px;font-weight:700;}
+.st-perm-sub{font-size:11px;color:var(--muted);margin-top:2px;}
+/* ── APP ROW v1 (compact single-line) ── */
+.app-row{background:var(--surface);border:1px solid var(--border);border-radius:12px;margin-bottom:6px;overflow:hidden;transition:border-color .15s,background .2s;}
+.app-row:hover{border-color:#3d4450;}
+.app-row.blocked{background:rgba(248,81,73,.07);border-color:rgba(248,81,73,.28);}
+.app-block-btn{width:26px;height:26px;border-radius:7px;border:1px solid;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;font-family:'Sora',sans-serif;flex-shrink:0;line-height:1;}
+.app-block-btn.unblocked{background:rgba(248,81,73,.08);border-color:rgba(248,81,73,.28);color:var(--danger);}
+.app-block-btn.unblocked:hover{background:rgba(248,81,73,.18);}
+.app-block-btn.is-blocked{background:rgba(63,185,80,.1);border-color:rgba(63,185,80,.3);color:var(--accent);}
+.app-block-btn.is-blocked:hover{background:rgba(63,185,80,.2);}
+.v1-main{display:flex;align-items:center;gap:10px;padding:10px 12px;}
+.v1-icon{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;}
+.v1-name{flex:1;min-width:0;font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.v1-actions{display:flex;align-items:center;gap:7px;flex-shrink:0;}
+.v1-sw{width:34px;height:19px;background:var(--border);border-radius:999px;position:relative;cursor:pointer;transition:background .2s;flex-shrink:0;}
+.v1-sw.on{background:var(--accent);}
+.v1-sw::after{content:'';position:absolute;width:13px;height:13px;background:white;border-radius:50%;top:3px;left:3px;transition:left .2s;}
+.v1-sw.on::after{left:18px;}
+.v1-limit-btn{height:26px;padding:0 9px;border-radius:7px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid;font-family:'Sora',sans-serif;transition:all .15s;white-space:nowrap;display:flex;align-items:center;gap:4px;}
+.v1-limit-btn.add{background:rgba(88,166,255,.1);border-color:rgba(88,166,255,.25);color:var(--accent2);}
+.v1-limit-btn.add:hover{background:rgba(88,166,255,.18);}
+.v1-limit-btn.remove{background:rgba(248,81,73,.08);border-color:rgba(248,81,73,.25);color:var(--danger);}
+.v1-limit-btn.remove:hover{background:rgba(248,81,73,.15);}
+.v1-limit-strip{display:none;align-items:center;padding:0 12px 8px;}
+.v1-limit-strip.show{display:flex;}
+.v1-limit-pill{display:inline-flex;align-items:center;gap:5px;border-radius:20px;padding:3px 9px;font-size:10px;font-weight:600;font-family:'DM Mono',monospace;letter-spacing:.2px;}
+.v1-limit-pill.time{background:rgba(63,185,80,.08);border:1px solid rgba(63,185,80,.2);color:var(--accent);}
+.v1-limit-pill.clock{background:rgba(88,166,255,.08);border:1px solid rgba(88,166,255,.2);color:var(--accent2);}
+.limit-panel{display:none;background:var(--surface2);border-top:1px solid var(--border);padding:8px 12px 10px;}
+.limit-panel.show{display:flex;gap:7px;animation:fadeIn .15s ease;}
+.v1-pick-btn{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:9px 6px;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;transition:all .15s;}
+.v1-pick-btn:hover{border-color:var(--accent2);background:rgba(88,166,255,.05);}
+.v1-pick-icon{font-size:18px;line-height:1;}
+.v1-pick-label{font-size:11px;font-weight:600;color:var(--text);}
+.v1-pick-sub{font-size:9px;color:var(--muted);}
+
+/* ── OVERLAYS & SHEETS ── */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:500;align-items:center;justify-content:center;padding:20px;}
+.overlay.show{display:flex;}
+.sheet-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);align-items:flex-end;}
+.sheet-overlay.show{display:flex;}
+.sheet{background:var(--surface);border-radius:22px 22px 0 0;width:100%;max-height:92vh;overflow-y:auto;padding:14px 16px 32px;}
+.sheet-handle{width:38px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 16px;}
+.sheet-toprow{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.sheet-title{font-size:16px;font-weight:700;margin-bottom:2px;}
+.sheet-sub{font-size:11px;color:var(--muted);margin-bottom:14px;}
+.popup-box{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:26px 22px;max-width:320px;width:100%;text-align:center;}
+.popup-title{font-size:15px;font-weight:600;margin-bottom:6px;}
+.popup-sub{font-size:12px;color:var(--muted);margin-bottom:20px;line-height:1.5;}
+.popup-btns{display:flex;gap:10px;}
+.popup-btns .btn{flex:1;padding:11px;}
+
+/* ── DAY SELECTOR ── */
+.day-sel{display:flex;gap:5px;margin:8px 0 12px;flex-wrap:wrap;}
+.day-btn{width:35px;height:35px;border-radius:50%;background:var(--surface2);border:1px solid var(--border);color:var(--muted);cursor:pointer;font-size:10px;font-weight:600;display:flex;align-items:center;justify-content:center;transition:all .15s;-webkit-tap-highlight-color:transparent;font-family:'Sora',sans-serif;}
+.day-btn.on{background:var(--accent);border-color:var(--accent);color:#0d1117;}
+
+/* ── DIALS ── */
+.dials-row{display:flex;gap:4px;margin:8px 0;}
+.dial-group{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;}
+.dial-label{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600;}
+.dial-wrapper{position:relative;width:100%;}
+.dial-scroll{height:250px;overflow-y:scroll;scroll-snap-type:y mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
+.dial-scroll::-webkit-scrollbar{display:none;}
+.dial-item{height:50px;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;font-family:'DM Mono',monospace;scroll-snap-align:center;color:var(--muted);}
+.dial-hl{position:absolute;top:50%;left:0;right:0;transform:translateY(-50%);height:50px;pointer-events:none;z-index:1;}
+.dial-hl-b{background:rgba(63,185,80,.07);border-top:1px solid rgba(63,185,80,.2);border-bottom:1px solid rgba(63,185,80,.2);}
+.dial-hl-g{background:rgba(63,185,80,.1);border-top:1px solid rgba(63,185,80,.3);border-bottom:1px solid rgba(63,185,80,.3);}
+.dial-hl-r{background:rgba(248,81,73,.09);border-top:1px solid rgba(248,81,73,.3);border-bottom:1px solid rgba(248,81,73,.3);}
+.dial-wrapper::before,.dial-wrapper::after{content:'';position:absolute;left:0;right:0;height:90px;pointer-events:none;z-index:2;}
+.dial-wrapper::before{top:0;background:linear-gradient(to bottom,var(--surface) 20%,transparent);}
+.dial-wrapper::after{bottom:0;background:linear-gradient(to top,var(--surface) 20%,transparent);}
+
+/* ── CLOCK TIME BLOCKS (green/red) ── */
+.ct-block{border-radius:14px;border:1px solid;margin:10px 0;overflow:hidden;}
+.ct-start{border-color:rgba(63,185,80,.25);background:rgba(63,185,80,.035);}
+.ct-end{border-color:rgba(248,81,73,.25);background:rgba(248,81,73,.035);}
+.ct-heading{font-size:15px;font-weight:700;padding:12px 14px 10px;border-bottom:1px solid;display:flex;align-items:center;gap:8px;letter-spacing:-.2px;}
+.ct-start .ct-heading{color:#5de673;border-color:rgba(63,185,80,.18);}
+.ct-end .ct-heading{color:#f87171;border-color:rgba(248,81,73,.18);}
+.ct-inner{padding:8px 12px 12px;}
+.ct-inner .dials-row{margin:6px 0 0;}
+/* Override fade gradient inside ct-blocks */
+.ct-start .dial-wrapper::before{background:linear-gradient(to bottom,rgba(10,26,15,.95) 20%,transparent);}
+.ct-start .dial-wrapper::after{background:linear-gradient(to top,rgba(10,26,15,.95) 20%,transparent);}
+.ct-end .dial-wrapper::before{background:linear-gradient(to bottom,rgba(24,10,10,.95) 20%,transparent);}
+.ct-end .dial-wrapper::after{background:linear-gradient(to top,rgba(24,10,10,.95) 20%,transparent);}
+
+/* ── AM/PM TOGGLE ── */
+.ampm-wrap{display:flex;flex-direction:column;gap:5px;width:100%;padding-top:0;}
+.ampm-btn{height:44px;border-radius:10px;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;cursor:pointer;color:var(--muted);transition:all .15s;-webkit-tap-highlight-color:transparent;font-family:'Sora',sans-serif;line-height:1;user-select:none;}
+.ampm-btn.act-g{background:rgba(63,185,80,.15);border-color:rgba(63,185,80,.45);color:#5de673;}
+.ampm-btn.act-r{background:rgba(248,81,73,.15);border-color:rgba(248,81,73,.45);color:#f87171;}
+
+/* ── NEPALI CALENDAR ── */
+.np-cal-header{background:var(--surface2);padding:12px 14px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);}
+.np-cal-nav{background:none;border:1px solid var(--border);color:var(--text);font-size:16px;cursor:pointer;padding:5px 11px;border-radius:7px;line-height:1;}
+.np-cal-nav:active{background:rgba(255,255,255,.07);}
+.np-cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;padding:8px;}
+.np-cal-head{text-align:center;font-size:10px;color:var(--muted);font-weight:600;padding:5px 0;}
+.np-cell{position:relative;aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:8px;cursor:pointer;border:1px solid transparent;transition:all .12s;padding:2px;}
+.np-cell:active{background:rgba(255,255,255,.07);}
+.np-cell.today{border-color:var(--accent) !important;background:rgba(63,185,80,.1) !important;}
+.np-cell.has-lim{background:rgba(88,166,255,.1);border-color:rgba(88,166,255,.3);}
+.np-cell .np-d{font-size:14px;font-weight:700;line-height:1;}
+.np-cell .en-d{font-size:8px;color:var(--muted);margin-top:1px;line-height:1;}
+.np-lim-dot{width:5px;height:5px;border-radius:50%;background:var(--accent2);position:absolute;bottom:3px;}
+
+/* ── DATE SCHEDULE SHEET ── */
+.ds-app-row{display:flex;align-items:center;gap:10px;padding:11px 13px;background:var(--surface);border:1px solid var(--border);border-radius:12px;margin-bottom:8px;}
+.ds-app-icon{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.ds-app-info{flex:1;min-width:0;}
+.ds-app-name{font-size:13px;font-weight:600;}
+.ds-app-lim{font-size:11px;color:var(--muted);margin-top:2px;}
+.ds-app-lim.has{color:var(--accent2);}
+.ds-btns{display:flex;gap:5px;flex-shrink:0;}
+.ds-btn{background:none;border:1px solid var(--border);border-radius:8px;padding:6px 9px;font-size:13px;cursor:pointer;color:var(--muted);font-family:'Sora',sans-serif;transition:all .12s;line-height:1;}
+.ds-btn:active{background:var(--surface2);}
+.ds-btn.rm{border-color:transparent;}
+.ds-btn.rm:active{color:var(--danger);}
+.ds-btn.sel{border-color:#f0c040;color:#f0c040;background:rgba(240,192,64,.08);}
+.ds-app-row.blocked{background:rgba(248,81,73,.07);border-color:rgba(248,81,73,.28);}
+.ds-block-btn{background:none;border:1px solid;border-radius:8px;padding:6px 9px;font-size:13px;cursor:pointer;font-family:'Sora',sans-serif;transition:all .12s;line-height:1;flex-shrink:0;}
+.ds-block-btn.unblocked{border-color:rgba(248,81,73,.35);color:var(--danger);}
+.ds-block-btn.unblocked:hover{background:rgba(248,81,73,.1);}
+.ds-block-btn.is-blocked{border-color:rgba(63,185,80,.35);color:var(--accent);}
+.ds-block-btn.is-blocked:hover{background:rgba(63,185,80,.1);}
+
+/* ── DAY DETAIL OVERLAY ── */
+.day-detail-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:730;align-items:center;justify-content:center;padding:20px;}
+.day-detail-overlay.show{display:flex;}
+.day-detail-box{background:var(--surface);border:1px solid var(--border);border-radius:18px;width:100%;max-width:360px;max-height:80vh;overflow-y:auto;padding:24px 20px 20px;}
+.dd-title{font-size:16px;font-weight:700;margin-bottom:3px;}
+.dd-date{font-size:12px;color:var(--muted);margin-bottom:16px;}
+.dd-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);}
+.dd-row:last-child{border-bottom:none;}
+.dd-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+.dd-info-name{font-size:13px;font-weight:600;}
+.dd-info-lim{font-size:11px;color:var(--muted);margin-top:2px;}
+.dd-empty{text-align:center;padding:20px;color:var(--muted);font-size:13px;}
+
+@media(min-width:640px){.grid-3{grid-template-columns:2fr 1fr;}.stats-row{grid-template-columns:repeat(4,1fr);}}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--accent);color:#0d1117;padding:10px 20px;border-radius:999px;font-size:13px;font-weight:600;z-index:900;opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;white-space:nowrap;box-shadow:0 4px 20px rgba(63,185,80,.4);}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+.toast.err{background:var(--danger);box-shadow:0 4px 20px rgba(248,81,73,.4);}
+/* ── NO CHILD BANNER ── */
+.no-child-banner{background:rgba(240,136,62,.1);border:1px solid rgba(240,136,62,.3);border-radius:12px;padding:14px 16px;margin-bottom:14px;display:flex;align-items:center;gap:10px;font-size:12px;color:var(--warn);}
+.no-child-banner span{flex:1;line-height:1.5;}
+.no-child-banner b{color:var(--text);}
+/* ── TOTAL LIMITS ROW ── */
+.total-limits-row{display:flex;gap:10px;margin-bottom:14px;}
+.total-limit-item{display:flex;align-items:center;justify-content:space-between;gap:8px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:10px 12px;flex:1;}
+.total-limit-label{font-size:12px;font-weight:600;cursor:pointer;flex:1;color:var(--text);}
+</style>
+</head>
+<body>
+
+<!-- TOP HEADER -->
+<div class="top-header">
+  <div class="logo"><div class="logo-icon">🛡️</div><div class="logo-text">FamilyShield</div></div>
+  <div id="child-switcher" class="child-switcher"></div>
+</div>
+
+<!-- BOTTOM NAV -->
+<div class="bottom-nav">
+  <div class="nav-item active" onclick="navTo(this,'dashboard')"><span class="icon">📊</span><span class="label">Overview</span></div>
+  <div class="nav-item" onclick="navTo(this,'screentime')"><span class="icon">⏱️</span><span class="label">Screen</span></div>
+  <div class="nav-item" onclick="navTo(this,'reports')"><span class="icon">📈</span><span class="label">Reports</span></div>
+  <div class="nav-item" onclick="navTo(this,'alerts')"><span class="icon">🔔</span><span class="label">Alerts</span></div>
+  <div class="nav-item" onclick="navTo(this,'timetable')"><span class="icon">📅</span><span class="label">Timetable</span></div>
+  <div class="nav-item" onclick="navTo(this,'settings')"><span class="icon">⚙️</span><span class="label">Settings</span></div>
+</div>
+
+<!-- ══ REMOVE CHILD OVERLAY (z:500) ══ -->
+<div class="overlay" id="remove-overlay" style="z-index:500;">
+  <div class="popup-box">
+    <div class="popup-title">Remove child?</div>
+    <div class="popup-sub" id="remove-child-label"></div>
+    <div class="popup-btns"><button class="btn btn-primary" onclick="confirmRemoveChild()">Yes</button><button class="btn btn-outline" onclick="cancelRemoveChild()">No</button></div>
+  </div>
+</div>
+
+<!-- ══ OVERWRITE CONFIRM (z:750) ══ -->
+<div class="overlay" id="overwrite-overlay" style="z-index:750;">
+  <div class="popup-box">
+    <div class="popup-title">Replace existing limit?</div>
+    <div class="popup-sub">Do you want to remove the previous limit and save the new one?</div>
+    <div class="popup-btns"><button class="btn btn-primary" onclick="confirmOverwrite()">Yes</button><button class="btn btn-outline" onclick="cancelOverwrite()">No</button></div>
+  </div>
+</div>
+
+<!-- ══ DATE SCHEDULE SAVE CONFIRM (z:760) ══ -->
+<div class="overlay" id="date-save-overlay" style="z-index:760;">
+  <div class="popup-box">
+    <div class="popup-title">Save schedule?</div>
+    <div class="popup-sub">Do you want to save the settings and remove the previous ones for this date?</div>
+    <div class="popup-btns"><button class="btn btn-primary" onclick="confirmDateSave()">Yes</button><button class="btn btn-outline" onclick="cancelDateSave()">No</button></div>
+  </div>
+</div>
+
+<!-- ══ TIME LIMIT SHEET (z:600, bumped to 720 in schedule context) ══ -->
+<div class="sheet-overlay" id="tl-sheet" style="z-index:600;">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-toprow">
+      <button id="tl-sched-btn" class="btn btn-outline" style="padding:6px 10px;font-size:11px;" onclick="openLimitSchedCal('time')">📅 Schedule</button>
+    </div>
+    <div class="sheet-title" id="tl-sheet-title">Time Limit</div>
+    <div class="sheet-sub">Daily usage duration limit for this app</div>
+    <div class="dials-row">
+      <div class="dial-group"><div class="dial-label">Hours</div><div class="dial-wrapper"><div class="dial-scroll" id="tl-h"></div><div class="dial-hl dial-hl-b"></div></div></div>
+      <div class="dial-group"><div class="dial-label">Min</div><div class="dial-wrapper"><div class="dial-scroll" id="tl-m"></div><div class="dial-hl dial-hl-b"></div></div></div>
+      <div class="dial-group"><div class="dial-label">Sec</div><div class="dial-wrapper"><div class="dial-scroll" id="tl-s"></div><div class="dial-hl dial-hl-b"></div></div></div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:8px;">
+      <button id="tl-save-btn" class="btn btn-primary" style="flex:2;padding:13px;" onclick="saveTimeLimit()">Save</button>
+      <button id="tl-cancel-btn" class="btn btn-outline" style="flex:1;padding:13px;" onclick="closeSheet('tl-sheet')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ CLOCK LIMIT SHEET (z:605, bumped to 720 in schedule context) ══ -->
+<div class="sheet-overlay" id="cl-sheet" style="z-index:605;">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-toprow">
+      <button id="cl-sched-btn" class="btn btn-outline" style="padding:6px 10px;font-size:11px;" onclick="openLimitSchedCal('clock')">📅 Schedule</button>
+    </div>
+    <div class="sheet-title" id="cl-sheet-title">Clock Limit</div>
+    <div class="sheet-sub">Block app between specific times of day</div>
+
+    <!-- START TIME — green theme -->
+    <div class="ct-block ct-start">
+      <div class="ct-heading">🟢 Start Time</div>
+      <div class="ct-inner">
+        <div class="dials-row">
+          <div class="dial-group"><div class="dial-label">Hour</div><div class="dial-wrapper"><div class="dial-scroll" id="cl-sh"></div><div class="dial-hl dial-hl-g"></div></div></div>
+          <div class="dial-group"><div class="dial-label">Min</div><div class="dial-wrapper"><div class="dial-scroll" id="cl-sm"></div><div class="dial-hl dial-hl-g"></div></div></div>
+          <div class="dial-group">
+            <div class="dial-label">AM / PM</div>
+            <div class="ampm-wrap" id="cl-sa">
+              <div class="ampm-btn act-g" data-val="AM" onclick="ampmClick('cl-sa','AM','g')">AM</div>
+              <div class="ampm-btn" data-val="PM" onclick="ampmClick('cl-sa','PM','g')">PM</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- END TIME — red theme -->
+    <div class="ct-block ct-end">
+      <div class="ct-heading">🔴 End Time</div>
+      <div class="ct-inner">
+        <div class="dials-row">
+          <div class="dial-group"><div class="dial-label">Hour</div><div class="dial-wrapper"><div class="dial-scroll" id="cl-eh"></div><div class="dial-hl dial-hl-r"></div></div></div>
+          <div class="dial-group"><div class="dial-label">Min</div><div class="dial-wrapper"><div class="dial-scroll" id="cl-em"></div><div class="dial-hl dial-hl-r"></div></div></div>
+          <div class="dial-group">
+            <div class="dial-label">AM / PM</div>
+            <div class="ampm-wrap" id="cl-ea">
+              <div class="ampm-btn" data-val="AM" onclick="ampmClick('cl-ea','AM','r')">AM</div>
+              <div class="ampm-btn act-r" data-val="PM" onclick="ampmClick('cl-ea','PM','r')">PM</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:10px;margin-top:8px;">
+      <button id="cl-save-btn" class="btn btn-primary" style="flex:2;padding:13px;" onclick="saveClockLimit()">Save</button>
+      <button id="cl-cancel-btn" class="btn btn-outline" style="flex:1;padding:13px;" onclick="closeSheet('cl-sheet')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ LIMIT SCHEDULE CALENDAR SHEET (z:630) ══ -->
+<div class="sheet-overlay" id="lsched-sheet" style="z-index:630;">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-toprow">
+      <div><div class="sheet-title">Pick a Date</div><div class="sheet-sub" style="margin-bottom:0;">Set a date-specific override</div></div>
+      <button class="btn btn-outline" style="padding:6px 10px;font-size:11px;" onclick="closeSheet('lsched-sheet')">✕ Close</button>
+    </div>
+    <div id="lsched-cal-container" style="margin-top:10px;border-radius:12px;overflow:hidden;border:1px solid var(--border);"></div>
+  </div>
+</div>
+
+<!-- ══ DATE-SPECIFIC LIMIT DIALS SHEET (z:660) ══ -->
+<div class="sheet-overlay" id="dl-sheet" style="z-index:660;">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-toprow">
+      <div><div class="sheet-title" id="dl-sheet-title">Limit for Date</div><div class="sheet-sub" id="dl-sheet-sub" style="margin-bottom:0;font-size:11px;color:var(--muted);"></div></div>
+      <button class="btn btn-outline" style="padding:6px 10px;font-size:11px;" onclick="closeSheet('dl-sheet')">✕ Close</button>
+    </div>
+    <!-- Time dials -->
+    <div id="dl-time-section">
+      <div class="dials-row">
+        <div class="dial-group"><div class="dial-label">Hours</div><div class="dial-wrapper"><div class="dial-scroll" id="dl-h"></div><div class="dial-hl dial-hl-b"></div></div></div>
+        <div class="dial-group"><div class="dial-label">Min</div><div class="dial-wrapper"><div class="dial-scroll" id="dl-m"></div><div class="dial-hl dial-hl-b"></div></div></div>
+        <div class="dial-group"><div class="dial-label">Sec</div><div class="dial-wrapper"><div class="dial-scroll" id="dl-s"></div><div class="dial-hl dial-hl-b"></div></div></div>
+      </div>
+    </div>
+    <!-- Clock dials -->
+    <div id="dl-clock-section" style="display:none;">
+      <div class="ct-block ct-start" style="margin-top:10px;">
+        <div class="ct-heading">🟢 Start Time</div>
+        <div class="ct-inner">
+          <div class="dials-row">
+            <div class="dial-group"><div class="dial-label">Hour</div><div class="dial-wrapper"><div class="dial-scroll" id="dl-sh"></div><div class="dial-hl dial-hl-g"></div></div></div>
+            <div class="dial-group"><div class="dial-label">Min</div><div class="dial-wrapper"><div class="dial-scroll" id="dl-sm"></div><div class="dial-hl dial-hl-g"></div></div></div>
+            <div class="dial-group">
+              <div class="dial-label">AM / PM</div>
+              <div class="ampm-wrap" id="dl-sa">
+                <div class="ampm-btn act-g" data-val="AM" onclick="ampmClick('dl-sa','AM','g')">AM</div>
+                <div class="ampm-btn" data-val="PM" onclick="ampmClick('dl-sa','PM','g')">PM</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="ct-block ct-end">
+        <div class="ct-heading">🔴 End Time</div>
+        <div class="ct-inner">
+          <div class="dials-row">
+            <div class="dial-group"><div class="dial-label">Hour</div><div class="dial-wrapper"><div class="dial-scroll" id="dl-eh"></div><div class="dial-hl dial-hl-r"></div></div></div>
+            <div class="dial-group"><div class="dial-label">Min</div><div class="dial-wrapper"><div class="dial-scroll" id="dl-em"></div><div class="dial-hl dial-hl-r"></div></div></div>
+            <div class="dial-group">
+              <div class="dial-label">AM / PM</div>
+              <div class="ampm-wrap" id="dl-ea">
+                <div class="ampm-btn" data-val="AM" onclick="ampmClick('dl-ea','AM','r')">AM</div>
+                <div class="ampm-btn act-r" data-val="PM" onclick="ampmClick('dl-ea','PM','r')">PM</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:12px;">
+      <button class="btn btn-primary" style="flex:2;padding:13px;" onclick="saveDateLimit()">Save</button>
+      <button class="btn btn-outline" style="flex:1;padding:13px;" onclick="closeSheet('dl-sheet')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SET SCHEDULE — MAIN CALENDAR SHEET (z:700) ══ -->
+<div class="sheet-overlay" id="main-sched-sheet" style="z-index:700;">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-toprow">
+      <div><div class="sheet-title">Set Schedule</div><div class="sheet-sub" style="margin-bottom:0;">Pick a date to manage app limits</div></div>
+      <button class="btn btn-outline" style="padding:6px 10px;font-size:11px;" onclick="closeSheet('main-sched-sheet')">✕ Close</button>
+    </div>
+    <div id="main-sched-cal" style="margin-top:12px;border-radius:12px;overflow:hidden;border:1px solid var(--border);"></div>
+    <div style="font-size:11px;color:var(--muted);text-align:center;margin-top:10px;">Tap a date to set app limits for that day</div>
+  </div>
+</div>
+
+<!-- ══ DATE APP LIST SHEET (z:710) ══ -->
+<div class="sheet-overlay" id="date-sched-sheet" style="z-index:710;">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-toprow">
+      <div><div class="sheet-title" id="ds-title">Schedule for Date</div><div id="ds-sub" style="font-size:11px;color:var(--muted);margin-top:2px;"></div></div>
+      <button class="btn btn-outline" style="padding:6px 10px;font-size:11px;" onclick="closeDateSchedSheet()">✕ Close</button>
+    </div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:12px;">Tap ⏱ or 🕑 to set a time or clock limit for each app on this date.</div>
+    <div id="ds-app-list"></div>
+    <div style="margin-top:14px;">
+      <button class="btn btn-primary" style="width:100%;padding:13px;" onclick="saveDateSchedule()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ DAY DETAIL OVERLAY (z:730) ══ -->
+<div class="day-detail-overlay" id="day-detail-overlay">
+  <div class="day-detail-box">
+    <div class="dd-title" id="dd-title">Scheduled Limits</div>
+    <div class="dd-date" id="dd-date"></div>
+    <div id="dd-body"></div>
+    <button class="btn btn-outline" style="width:100%;margin-top:16px;padding:12px;" onclick="document.getElementById('day-detail-overlay').classList.remove('show')">Close</button>
+  </div>
+</div>
+
+<!-- ══ TOTAL TIME LIMIT SHEET (z:590) ══ -->
+<div class="sheet-overlay" id="ttl-sheet" style="z-index:590;">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-toprow">
+      <div><div class="sheet-title">Total Time Limit</div><div class="sheet-sub" style="margin-bottom:0;">Select apps and set a shared daily time limit</div></div>
+      <button class="btn btn-outline" style="padding:6px 10px;font-size:11px;" onclick="closeSheet('ttl-sheet')">✕ Close</button>
+    </div>
+    <div id="ttl-app-list" style="margin:12px 0;"></div>
+    <div class="dials-row">
+      <div class="dial-group"><div class="dial-label">Hours</div><div class="dial-wrapper"><div class="dial-scroll" id="ttl-h"></div><div class="dial-hl dial-hl-b"></div></div></div>
+      <div class="dial-group"><div class="dial-label">Min</div><div class="dial-wrapper"><div class="dial-scroll" id="ttl-m"></div><div class="dial-hl dial-hl-b"></div></div></div>
+      <div class="dial-group"><div class="dial-label">Sec</div><div class="dial-wrapper"><div class="dial-scroll" id="ttl-s"></div><div class="dial-hl dial-hl-b"></div></div></div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:8px;">
+      <button class="btn btn-primary" style="flex:2;padding:13px;" onclick="saveTotalTimeLimit()">Save</button>
+      <button class="btn btn-outline" style="flex:1;padding:13px;" onclick="closeSheet('ttl-sheet')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ TOTAL CLOCK LIMIT — BLOCK ALL APPS SHEET (z:591) ══ -->
+<div class="sheet-overlay" id="tcl-ba-sheet" style="z-index:591;">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-toprow">
+      <div><div class="sheet-title">Block All Apps</div><div class="sheet-sub" style="margin-bottom:0;">Block every app between these times</div></div>
+      <button class="btn btn-outline" style="padding:6px 10px;font-size:11px;" onclick="closeSheet('tcl-ba-sheet')">✕ Close</button>
+    </div>
+    <div class="ct-block ct-start">
+      <div class="ct-heading">🟢 Start Time</div>
+      <div class="ct-inner">
+        <div class="dials-row">
+          <div class="dial-group"><div class="dial-label">Hour</div><div class="dial-wrapper"><div class="dial-scroll" id="tcl-ba-sh"></div><div class="dial-hl dial-hl-g"></div></div></div>
+          <div class="dial-group"><div class="dial-label">Min</div><div class="dial-wrapper"><div class="dial-scroll" id="tcl-ba-sm"></div><div class="dial-hl dial-hl-g"></div></div></div>
+          <div class="dial-group">
+            <div class="dial-label">AM / PM</div>
+            <div class="ampm-wrap" id="tcl-ba-sa">
+              <div class="ampm-btn act-g" data-val="AM" onclick="ampmClick('tcl-ba-sa','AM','g')">AM</div>
+              <div class="ampm-btn" data-val="PM" onclick="ampmClick('tcl-ba-sa','PM','g')">PM</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="ct-block ct-end">
+      <div class="ct-heading">🔴 End Time</div>
+      <div class="ct-inner">
+        <div class="dials-row">
+          <div class="dial-group"><div class="dial-label">Hour</div><div class="dial-wrapper"><div class="dial-scroll" id="tcl-ba-eh"></div><div class="dial-hl dial-hl-r"></div></div></div>
+          <div class="dial-group"><div class="dial-label">Min</div><div class="dial-wrapper"><div class="dial-scroll" id="tcl-ba-em"></div><div class="dial-hl dial-hl-r"></div></div></div>
+          <div class="dial-group">
+            <div class="dial-label">AM / PM</div>
+            <div class="ampm-wrap" id="tcl-ba-ea">
+              <div class="ampm-btn" data-val="AM" onclick="ampmClick('tcl-ba-ea','AM','r')">AM</div>
+              <div class="ampm-btn act-r" data-val="PM" onclick="ampmClick('tcl-ba-ea','PM','r')">PM</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:8px;">
+      <button class="btn btn-primary" style="flex:2;padding:13px;" onclick="saveTclBlockAll()">Save</button>
+      <button class="btn btn-outline" style="flex:1;padding:13px;" onclick="closeSheet('tcl-ba-sheet')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ TOTAL CLOCK LIMIT — BLOCK SPECIFIC APPS SHEET (z:592) ══ -->
+<div class="sheet-overlay" id="tcl-bs-sheet" style="z-index:592;">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-toprow">
+      <div><div class="sheet-title">Block Specific Apps</div><div class="sheet-sub" style="margin-bottom:0;">Select apps and set a block time range</div></div>
+      <button class="btn btn-outline" style="padding:6px 10px;font-size:11px;" onclick="closeSheet('tcl-bs-sheet')">✕ Close</button>
+    </div>
+    <div id="tcl-bs-app-list" style="margin:12px 0;"></div>
+    <div class="ct-block ct-start">
+      <div class="ct-heading">🟢 Start Time</div>
+      <div class="ct-inner">
+        <div class="dials-row">
+          <div class="dial-group"><div class="dial-label">Hour</div><div class="dial-wrapper"><div class="dial-scroll" id="tcl-bs-sh"></div><div class="dial-hl dial-hl-g"></div></div></div>
+          <div class="dial-group"><div class="dial-label">Min</div><div class="dial-wrapper"><div class="dial-scroll" id="tcl-bs-sm"></div><div class="dial-hl dial-hl-g"></div></div></div>
+          <div class="dial-group">
+            <div class="dial-label">AM / PM</div>
+            <div class="ampm-wrap" id="tcl-bs-sa">
+              <div class="ampm-btn act-g" data-val="AM" onclick="ampmClick('tcl-bs-sa','AM','g')">AM</div>
+              <div class="ampm-btn" data-val="PM" onclick="ampmClick('tcl-bs-sa','PM','g')">PM</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="ct-block ct-end">
+      <div class="ct-heading">🔴 End Time</div>
+      <div class="ct-inner">
+        <div class="dials-row">
+          <div class="dial-group"><div class="dial-label">Hour</div><div class="dial-wrapper"><div class="dial-scroll" id="tcl-bs-eh"></div><div class="dial-hl dial-hl-r"></div></div></div>
+          <div class="dial-group"><div class="dial-label">Min</div><div class="dial-wrapper"><div class="dial-scroll" id="tcl-bs-em"></div><div class="dial-hl dial-hl-r"></div></div></div>
+          <div class="dial-group">
+            <div class="dial-label">AM / PM</div>
+            <div class="ampm-wrap" id="tcl-bs-ea">
+              <div class="ampm-btn" data-val="AM" onclick="ampmClick('tcl-bs-ea','AM','r')">AM</div>
+              <div class="ampm-btn act-r" data-val="PM" onclick="ampmClick('tcl-bs-ea','PM','r')">PM</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:8px;">
+      <button class="btn btn-primary" style="flex:2;padding:13px;" onclick="saveTclBlockSpecific()">Save</button>
+      <button class="btn btn-outline" style="flex:1;padding:13px;" onclick="closeSheet('tcl-bs-sheet')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ TOAST ══ -->
+<!-- ══ TIMETABLE — ADD TASK SHEET (z:770) ══ -->
+<div class="sheet-overlay" id="tt-add-sheet" style="z-index:770;">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-toprow">
+      <div><div class="sheet-title">Add Task</div><div class="sheet-sub" style="margin-bottom:0;">Enter task details</div></div>
+      <button class="btn btn-outline" style="padding:6px 10px;font-size:11px;" onclick="closeSheet('tt-add-sheet')">✕ Close</button>
+    </div>
+    <div style="margin-bottom:14px;">
+      <div style="font-size:12px;font-weight:600;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.4px;">Task Name</div>
+      <input id="tt-task-name" type="text" maxlength="40" placeholder="e.g. Study, School, Free Time…"
+        style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:11px 13px;font-size:14px;color:var(--text);font-family:'Sora',sans-serif;box-sizing:border-box;outline:none;">
+    </div>
+    <div class="ct-block ct-start">
+      <div class="ct-heading">🟢 Start Time</div>
+      <div class="ct-inner">
+        <div class="dials-row">
+          <div class="dial-group"><div class="dial-label">Hour</div><div class="dial-wrapper"><div class="dial-scroll" id="tt-sh"></div><div class="dial-hl dial-hl-g"></div></div></div>
+          <div class="dial-group"><div class="dial-label">Min</div><div class="dial-wrapper"><div class="dial-scroll" id="tt-sm"></div><div class="dial-hl dial-hl-g"></div></div></div>
+          <div class="dial-group">
+            <div class="dial-label">AM / PM</div>
+            <div class="ampm-wrap" id="tt-sa">
+              <div class="ampm-btn act-g" data-val="AM" onclick="ampmClick('tt-sa','AM','g')">AM</div>
+              <div class="ampm-btn" data-val="PM" onclick="ampmClick('tt-sa','PM','g')">PM</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="ct-block ct-end">
+      <div class="ct-heading">🔴 End Time</div>
+      <div class="ct-inner">
+        <div class="dials-row">
+          <div class="dial-group"><div class="dial-label">Hour</div><div class="dial-wrapper"><div class="dial-scroll" id="tt-eh"></div><div class="dial-hl dial-hl-r"></div></div></div>
+          <div class="dial-group"><div class="dial-label">Min</div><div class="dial-wrapper"><div class="dial-scroll" id="tt-em"></div><div class="dial-hl dial-hl-r"></div></div></div>
+          <div class="dial-group">
+            <div class="dial-label">AM / PM</div>
+            <div class="ampm-wrap" id="tt-ea">
+              <div class="ampm-btn" data-val="AM" onclick="ampmClick('tt-ea','AM','r')">AM</div>
+              <div class="ampm-btn act-r" data-val="PM" onclick="ampmClick('tt-ea','PM','r')">PM</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:8px;">
+      <button class="btn btn-primary" style="flex:2;padding:13px;" onclick="saveTask()">Save</button>
+      <button class="btn btn-outline" style="flex:1;padding:13px;" onclick="closeSheet('tt-add-sheet')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ TIMETABLE — EDIT TASK SHEET (z:780) ══ -->
+<div class="sheet-overlay" id="tt-edit-sheet" style="z-index:780;">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-toprow">
+      <div><div class="sheet-title">Edit Task</div><div class="sheet-sub" style="margin-bottom:0;">Update task details</div></div>
+      <button class="btn btn-outline" style="padding:6px 10px;font-size:11px;" onclick="closeSheet('tt-edit-sheet')">✕ Close</button>
+    </div>
+    <div style="margin-bottom:14px;">
+      <div style="font-size:12px;font-weight:600;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.4px;">Task Name</div>
+      <input id="tt-edit-task-name" type="text" maxlength="40" placeholder="e.g. Study, School, Free Time…"
+        style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:11px 13px;font-size:14px;color:var(--text);font-family:'Sora',sans-serif;box-sizing:border-box;outline:none;">
+    </div>
+    <div class="ct-block ct-start">
+      <div class="ct-heading">🟢 Start Time</div>
+      <div class="ct-inner">
+        <div class="dials-row">
+          <div class="dial-group"><div class="dial-label">Hour</div><div class="dial-wrapper"><div class="dial-scroll" id="tt-edit-sh"></div><div class="dial-hl dial-hl-g"></div></div></div>
+          <div class="dial-group"><div class="dial-label">Min</div><div class="dial-wrapper"><div class="dial-scroll" id="tt-edit-sm"></div><div class="dial-hl dial-hl-g"></div></div></div>
+          <div class="dial-group">
+            <div class="dial-label">AM / PM</div>
+            <div class="ampm-wrap" id="tt-edit-sa">
+              <div class="ampm-btn act-g" data-val="AM" onclick="ampmClick('tt-edit-sa','AM','g')">AM</div>
+              <div class="ampm-btn" data-val="PM" onclick="ampmClick('tt-edit-sa','PM','g')">PM</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="ct-block ct-end">
+      <div class="ct-heading">🔴 End Time</div>
+      <div class="ct-inner">
+        <div class="dials-row">
+          <div class="dial-group"><div class="dial-label">Hour</div><div class="dial-wrapper"><div class="dial-scroll" id="tt-edit-eh"></div><div class="dial-hl dial-hl-r"></div></div></div>
+          <div class="dial-group"><div class="dial-label">Min</div><div class="dial-wrapper"><div class="dial-scroll" id="tt-edit-em"></div><div class="dial-hl dial-hl-r"></div></div></div>
+          <div class="dial-group">
+            <div class="dial-label">AM / PM</div>
+            <div class="ampm-wrap" id="tt-edit-ea">
+              <div class="ampm-btn" data-val="AM" onclick="ampmClick('tt-edit-ea','AM','r')">AM</div>
+              <div class="ampm-btn act-r" data-val="PM" onclick="ampmClick('tt-edit-ea','PM','r')">PM</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div style="margin-top:8px;">
+      <button class="btn btn-primary" style="width:100%;padding:13px;" onclick="saveEditTask()">Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- ══ MAIN ══ -->
+<div class="main">
+
+<!-- DASHBOARD -->
+<div id="dashboard" class="section active">
+  <div class="topbar">
+    <div><div class="page-title" id="dash-title">Dashboard</div><div class="page-sub">Fri, Feb 27 2026 · Last sync 2 min ago</div></div>
+    <div style="display:flex;gap:8px;flex-shrink:0;">
+      <button class="btn btn-outline" onclick="navTo(document.querySelectorAll('.bottom-nav .nav-item')[3],'alerts')">🔔 2</button>
+      <button class="btn btn-primary">⏸ Pause</button>
+    </div>
+  </div>
+  <div class="stats-row" id="dash-stats-row"></div>
+  <div class="grid-3">
+    <div class="card">
+      <div class="card-title"><div class="card-title-text">⏱ App Usage Today</div><span class="card-action" onclick="navTo(document.querySelectorAll('.bottom-nav .nav-item')[1],'screentime')">View all →</span></div>
+      <div id="dash-app-usage-body"></div>
+    </div>
+    <div class="card">
+      <div class="card-title"><div class="card-title-text">🔔 Recent Alerts</div></div>
+      <div id="dash-alerts-body"></div>
+    </div>
+  </div>
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title"><div class="card-title-text">📅 Weekly Screen Time</div></div>
+      <div class="mini-chart" id="dash-weekly-bars"></div>
+      <div class="chart-labels"><div class="chart-label">M</div><div class="chart-label">T</div><div class="chart-label">W</div><div class="chart-label">T</div><div class="chart-label">F</div><div class="chart-label">S</div><div class="chart-label">S</div></div>
+    </div>
+    <div class="card">
+      <div class="card-title"><div class="card-title-text">⚡ Quick Actions</div></div>
+      <div class="toggle-list">
+        <div class="toggle-item"><div class="toggle-info"><span class="toggle-icon">📵</span><div><div class="toggle-name">Pause All Apps</div><div class="toggle-desc">Lock device now</div></div></div><div class="switch" data-sid="sw-pause" onclick="toggleSwitch(this)"></div></div>
+        <div class="toggle-item"><div class="toggle-info"><span class="toggle-icon">🛏️</span><div><div class="toggle-name">Bedtime Mode</div><div class="toggle-desc">8:30 PM – 7:00 AM</div></div></div><div class="switch" data-sid="sw-bedtime" onclick="toggleSwitch(this)"></div></div>
+        <div class="toggle-item"><div class="toggle-info"><span class="toggle-icon">🏫</span><div><div class="toggle-name">School Mode</div><div class="toggle-desc">Blocks games 8–3 PM</div></div></div><div class="switch" data-sid="sw-school" onclick="toggleSwitch(this)"></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SCREEN TIME ══ -->
+<div id="screentime" class="section">
+  <div class="topbar"><div><div class="page-title">Screen Time</div><div class="page-sub">Manage app limits &amp; schedules</div></div></div>
+  <!-- TOTAL LIMITS BUTTONS -->
+  <div class="total-limits-row">
+    <div class="total-limit-item">
+      <span class="total-limit-label" onclick="openTotalTimeLimit()">⏱ Total Time Limit</span>
+      <div class="switch" id="ttl-main-sw" onclick="toggleTtlMainSwitch(this)"></div>
+    </div>
+    <div class="total-limit-item">
+      <span class="total-limit-label" onclick="openTotalClockLimit()">🕑 Total Clock Limit</span>
+      <div class="switch" id="tcl-main-sw" onclick="toggleTclMainSwitch(this)"></div>
+    </div>
+  </div>
+  <!-- TOTAL CLOCK LIMIT SUB-OPTIONS -->
+  <div id="tcl-subopts" style="display:none;margin-top:-6px;margin-bottom:14px;flex-direction:column;gap:6px;">
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;overflow:hidden;">
+      <div style="display:flex;align-items:center;gap:10px;padding:11px 14px;cursor:pointer;" onclick="openTclBlockAll()">
+        <span style="font-size:16px;">🚫</span>
+        <div style="flex:1;">
+          <div style="font-size:13px;font-weight:500;">Block All Apps</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:1px;">Block every app between set times</div>
+        </div>
+        <span style="color:var(--muted);font-size:14px;">›</span>
+      </div>
+    </div>
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;overflow:hidden;">
+      <div style="display:flex;align-items:center;gap:10px;padding:11px 14px;cursor:pointer;" onclick="openTclBlockSpecific()">
+        <span style="font-size:16px;">🎯</span>
+        <div style="flex:1;">
+          <div style="font-size:13px;font-weight:500;">Block Specific Apps</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:1px;">Choose which apps to block by time</div>
+        </div>
+        <span style="color:var(--muted);font-size:14px;">›</span>
+      </div>
+    </div>
+  </div>
+  <div class="st-perm-heading">
+    <div><div class="st-perm-title">📱 App Permissions</div><div class="st-perm-sub">Set limits for individual apps</div></div>
+    <button class="btn btn-outline" onclick="openMainSchedCal()" style="display:flex;align-items:center;gap:6px;white-space:nowrap;flex-shrink:0;">📅 Set Schedule</button>
+  </div>
+  <div id="no-child-banner" class="no-child-banner" style="display:none;">
+    <span>⚠️ <b>No child selected.</b> Add a child from Settings → Children, then select them in the header to save limits.</span>
+    <button class="btn btn-outline" style="font-size:11px;padding:6px 10px;flex-shrink:0;" onclick="navTo(document.querySelectorAll('.bottom-nav .nav-item')[5],'settings')">Go →</button>
+  </div>
+  <div id="app-list-container"></div>
+  <div class="card" style="margin-top:4px;">
+    <div class="card-title"><div class="card-title-text">📅 Schedule Overview</div><span style="font-size:11px;color:var(--muted);">Tap date for details</span></div>
+    <div id="summary-cal-container" style="border-radius:10px;overflow:hidden;border:1px solid var(--border);"></div>
+    <div style="font-size:10px;color:var(--muted);text-align:center;margin-top:8px;padding-bottom:2px;">
+      <span style="display:inline-flex;align-items:center;gap:4px;margin-right:12px;"><span style="width:8px;height:8px;border-radius:50%;background:var(--accent2);display:inline-block;"></span>Has limits</span>
+      <span style="display:inline-flex;align-items:center;gap:4px;"><span style="width:8px;height:8px;border-radius:2px;border:1px solid var(--accent);display:inline-block;"></span>Today</span>
+    </div>
+  </div>
+</div>
+
+
+
+
+
+
+
+<!-- REPORTS -->
+<div id="reports" class="section">
+  <div class="topbar"><div><div class="page-title">Reports</div><div class="page-sub">Usage insights and trends</div></div></div>
+  <div class="stats-row" id="reports-stats-row"></div>
+  <div class="card"><div class="card-title"><div class="card-title-text">📊 7-Day Trend</div></div><div class="mini-chart" id="reports-chart-bars" style="height:100px"></div><div class="chart-labels"><div class="chart-label">Mon</div><div class="chart-label">Tue</div><div class="chart-label">Wed</div><div class="chart-label">Thu</div><div class="chart-label">Fri</div><div class="chart-label">Sat</div><div class="chart-label">Sun</div></div></div>
+</div>
+
+<!-- ALERTS -->
+<div id="alerts" class="section">
+  <div class="topbar"><div><div class="page-title">Alerts &amp; Notifications</div><div class="page-sub">Manage how you get notified</div></div></div>
+  <div class="card"><div class="card-title"><div class="card-title-text">🔔 Notification Settings</div></div><div class="toggle-list"><div class="toggle-item"><div class="toggle-info"><span class="toggle-icon">📵</span><div><div class="toggle-name">App Blocked Alert</div><div class="toggle-desc">Notify when child tries a blocked app</div></div></div><div class="switch" data-sid="sw-alert-blocked" onclick="toggleSwitch(this)"></div></div><div class="toggle-item"><div class="toggle-info"><span class="toggle-icon">⏰</span><div><div class="toggle-name">Time Limit Reached</div><div class="toggle-desc">Alert when daily limit is 90% used</div></div></div><div class="switch" data-sid="sw-alert-time" onclick="toggleSwitch(this)"></div></div><div class="toggle-item"><div class="toggle-info"><span class="toggle-icon">📍</span><div><div class="toggle-name">Location Zone Alert</div><div class="toggle-desc">Notify on zone entry/exit</div></div></div><div class="switch" data-sid="sw-alert-location" onclick="toggleSwitch(this)"></div></div><div class="toggle-item"><div class="toggle-info"><span class="toggle-icon">📶</span><div><div class="toggle-name">Device Offline Alert</div><div class="toggle-desc">Notify when device goes offline</div></div></div><div class="switch" data-sid="sw-alert-offline" onclick="toggleSwitch(this)"></div></div><div class="toggle-item"><div class="toggle-info"><span class="toggle-icon">📈</span><div><div class="toggle-name">Weekly Report Email</div><div class="toggle-desc">Receive weekly usage summary</div></div></div><div class="switch" data-sid="sw-alert-weekly" onclick="toggleSwitch(this)"></div></div></div></div>
+</div>
+
+<!-- SETTINGS -->
+<div id="settings" class="section">
+  <div class="topbar"><div><div class="page-title">Settings</div><div class="page-sub">Account and app preferences</div></div></div>
+  <div class="card" id="children-card">
+    <div class="card-title"><div class="card-title-text">👨‍👩‍👧 Children</div></div>
+    <div id="children-list"></div>
+    <div class="add-child-form" id="add-child-form">
+      <input type="text" id="child-name-input" placeholder="Enter child's name" maxlength="30">
+      <div style="display:flex;gap:8px"><button class="btn btn-primary" style="flex:1" onclick="confirmAddChild()">Okay</button><button class="btn btn-outline" style="flex:1" onclick="hideAddChildForm()">Cancel</button></div>
+    </div>
+    <button class="btn btn-outline" id="add-child-btn" onclick="showAddChildForm()" style="width:100%;margin-top:4px;padding:12px">+ Add Children</button>
+  </div>
+</div>
+
+<!-- TIMETABLE -->
+<div id="timetable" class="section">
+  <div class="topbar"><div><div class="page-title">Timetable</div><div class="page-sub">Today's tasks</div></div></div>
+  <div class="card" style="padding:0;overflow:hidden;">
+    <div id="tt-task-list" style="max-height:420px;overflow-y:auto;padding:12px 14px;">
+      <!-- tasks rendered by renderTimetable() -->
+    </div>
+  </div>
+  <button class="btn btn-primary" style="width:100%;margin-top:12px;padding:13px;font-size:14px;" onclick="openAddTask()">＋ Add Task</button>
+</div>
+
+</div><!-- .main -->
+
+<script data-cfasync="false">
+/* ═══════════════════════════════════════════
+   NEPALI CALENDAR DATA
+═══════════════════════════════════════════ */
+var NP_MONTHS=[{np:'बैशाख',en:'April/May'},{np:'जेठ',en:'May/June'},{np:'असार',en:'June/July'},{np:'साउन',en:'July/August'},{np:'भदौ',en:'August/Sep'},{np:'असोज',en:'Sep/October'},{np:'कार्तिक',en:'Oct/November'},{np:'मंसिर',en:'Nov/December'},{np:'पुष',en:'Dec/January'},{np:'माघ',en:'Jan/February'},{np:'फागुन',en:'Feb/March'},{np:'चैत',en:'March/April'}];
+var BS_DAYS={2082:[31,32,31,32,31,30,30,30,29,29,30,30],2083:[31,31,32,31,31,31,30,29,30,29,30,30]};
+/* AD start date for each BS year-month (0-indexed month) */
+var BS_STARTS={'2082-0':{y:2025,m:3,d:14},'2082-1':{y:2025,m:4,d:15},'2082-2':{y:2025,m:5,d:16},'2082-3':{y:2025,m:6,d:17},'2082-4':{y:2025,m:7,d:17},'2082-5':{y:2025,m:8,d:17},'2082-6':{y:2025,m:9,d:17},'2082-7':{y:2025,m:10,d:16},'2082-8':{y:2025,m:11,d:16},'2082-9':{y:2026,m:0,d:15},'2082-10':{y:2026,m:1,d:13},'2082-11':{y:2026,m:2,d:15},'2083-0':{y:2026,m:3,d:14},'2083-1':{y:2026,m:4,d:15},'2083-2':{y:2026,m:5,d:16},'2083-3':{y:2026,m:6,d:17},'2083-4':{y:2026,m:7,d:17},'2083-5':{y:2026,m:8,d:17},'2083-6':{y:2026,m:9,d:17},'2083-7':{y:2026,m:10,d:16},'2083-8':{y:2026,m:11,d:16},'2083-9':{y:2027,m:0,d:15},'2083-10':{y:2027,m:1,d:13},'2083-11':{y:2027,m:2,d:15}};
+var EN_MONS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+/* Today: Falgun 15, 2082 = Feb 27, 2026 */
+var TODAY_BS={year:2082,month:10,day:15};
+
+/* ═══════════════════════════════════════════
+   APP LIST
+═══════════════════════════════════════════ */
+var APP_LIST=[
+  {id:'youtube',name:'YouTube Kids',cat:'Entertainment',icon:'📘',bg:'#1877f2'},
+  {id:'roblox',name:'Roblox',cat:'Games',icon:'🎮',bg:'#ff6b35'},
+  {id:'tiktok',name:'TikTok',cat:'Social Media',icon:'🎵',bg:'#e91e63'},
+  {id:'whatsapp',name:'WhatsApp',cat:'Messaging',icon:'💬',bg:'#25d366'},
+  {id:'chrome',name:'Chrome',cat:'Browser',icon:'🌐',bg:'#4285f4'},
+  {id:'camera',name:'Camera',cat:'System',icon:'📷',bg:'#555'},
+  {id:'settings',name:'Settings',cat:'System',icon:'⚙️',bg:'#444'},
+  {id:'maps',name:'Maps',cat:'Navigation',icon:'🗺️',bg:'#34a853'},
+  {id:'khan',name:'Khan Academy',cat:'Education',icon:'📚',bg:'#7c3aed'},
+  {id:'spotify',name:'Spotify',cat:'Music',icon:'🎧',bg:'#1db954'},
+  {id:'gmail',name:'Gmail',cat:'Communication',icon:'✉️',bg:'#ea4335'},
+  {id:'netflix',name:'Netflix',cat:'Entertainment',icon:'🎬',bg:'#e50914'}
+];
+
+/* ═══════════════════════════════════════════
+   DIAL VALUES
+═══════════════════════════════════════════ */
+var VALS_H24=[],VALS_MIN=[],VALS_H12=['1','2','3','4','5','6','7','8','9','10','11','12'],VALS_SEC=[];
+(function(){for(var i=0;i<24;i++)VALS_H24.push(pZ(i));for(var j=0;j<60;j++){VALS_MIN.push(pZ(j));VALS_SEC.push(pZ(j));}})();
+function pZ(n){return n<10?'0'+n:String(n);}
+
+var DIAL_H=50,DIAL_PAD=2,DIAL_REPS=11;
+
+function dialBuild(el,vals,initVal){
+  if(!el)return;
+  el.innerHTML='';
+  var sp1=document.createElement('div');sp1.style.height=(DIAL_H*DIAL_PAD)+'px';el.appendChild(sp1);
+  for(var r=0;r<DIAL_REPS;r++){
+    for(var i=0;i<vals.length;i++){
+      var d=document.createElement('div');d.className='dial-item';d.textContent=vals[i];el.appendChild(d);
+    }
+  }
+  var sp2=document.createElement('div');sp2.style.height=(DIAL_H*DIAL_PAD)+'px';el.appendChild(sp2);
+  dialSetVal(el,vals,initVal);
+}
+
+function dialSetVal(el,vals,val){
+  if(!el||!vals.length)return;
+  var idx=vals.indexOf(String(val));if(idx<0)idx=0;
+  var mid=Math.floor(DIAL_REPS/2);
+  /* Use requestAnimationFrame to ensure DOM is ready */
+  requestAnimationFrame(function(){
+    el.scrollTop=(mid*vals.length+idx)*DIAL_H;
+  });
+}
+
+function dialRead(el,vals){
+  if(!el||!vals.length)return vals[0];
+  var idx=Math.round(el.scrollTop/DIAL_H);
+  var vi=((idx%vals.length)+vals.length)%vals.length;
+  return vals[vi];
+}
+
+/* ═══════════════════════════════════════════
+   AM/PM TOGGLE
+═══════════════════════════════════════════ */
+function ampmClick(id,val,theme){
+  var wrap=document.getElementById(id);if(!wrap)return;
+  var cls=theme==='r'?'act-r':'act-g';
+  var btns=wrap.querySelectorAll('.ampm-btn');
+  for(var i=0;i<btns.length;i++){
+    btns[i].classList.remove('act-g','act-r');
+    if(btns[i].getAttribute('data-val')===val) btns[i].classList.add(cls);
+  }
+}
+function ampmSet(id,val,theme){ampmClick(id,val,theme);}
+function ampmRead(id){
+  var wrap=document.getElementById(id);if(!wrap)return'AM';
+  var a=wrap.querySelector('.act-g,.act-r');
+  return a?a.getAttribute('data-val'):'AM';
+}
+
+/* ═══════════════════════════════════════════
+   STATE
+═══════════════════════════════════════════ */
+var AVATAR_COLORS=['linear-gradient(135deg,#ff6b9d,#c44569)','linear-gradient(135deg,#4ecdc4,#2d6a8f)','linear-gradient(135deg,#f093fb,#f5576c)','linear-gradient(135deg,#4facfe,#00f2fe)','linear-gradient(135deg,#43e97b,#38f9d7)','linear-gradient(135deg,#fa709a,#fee140)','linear-gradient(135deg,#a18cd1,#fbc2eb)','linear-gradient(135deg,#fccb90,#d57eeb)'];
+var ALL_SIDS=['sw-pause','sw-bedtime','sw-school','sw-adult','sw-gambling','sw-drugs','sw-violence','sw-shopping','sw-social','sw-safe-search','sw-block-dm','sw-block-img','sw-zone-home','sw-zone-school','sw-zone-grandma','sw-alert-blocked','sw-alert-time','sw-alert-location','sw-alert-offline','sw-alert-weekly','sw-pin','sw-bio','sw-vpn'];
+var children=[],currentViewId=null,pendingRemoveId=null,uidCounter=1;
+var activeAppId=null,activeLimitType=null,editingDateKey=null,pendingOverwriteCb=null;
+var activeLimitContext='app'; /* 'app' or 'schedule' */
+var activeScheduleDateKey=null;
+var pendingSchedLimits={};
+var pendingSchedBlocked={};
+
+function makeDefaultAppLimits(){
+  var o={};
+  for(var i=0;i<APP_LIST.length;i++) o[APP_LIST[i].id]={enabled:false,limitType:null,timeLimitData:null,clockLimitData:null,blocked:false};
+  return o;
+}
+function makeDefaultState(){
+  var sw={};for(var i=0;i<ALL_SIDS.length;i++)sw[ALL_SIDS[i]]=false;
+  return{
+    switches:sw,
+    sites:[],
+    appLimits:makeDefaultAppLimits(),
+    scheduleLimits:{},
+    totalTimeLimitData:{saved:false,enabled:false,selectedApps:{},h:0,m:0,s:0},
+    tclData:{enabled:false},
+    tclBlockAllData:{saved:false,sh:9,sm:0,sa:'AM',eh:5,em:0,ea:'PM'},
+    tclBlockSpecificData:{saved:false,selectedApps:{},sh:9,sm:0,sa:'AM',eh:5,em:0,ea:'PM'},
+    dashData:{
+      screenTime:{value:'3h 42m',color:'var(--warn)',limit:'Limit: 4h 00m',badge:'↑ 18 min vs yesterday',badgeClass:'badge-warn'},
+      appsBlocked:{value:'7',sub:'2 attempts today',badge:'2 new',badgeClass:'badge-red'},
+      location:{value:'🏠 Home',sub:'Arrived 3:21 PM',badge:'✓ Safe zone',badgeClass:'badge-green'},
+      bedtime:{value:'8:30',sub:'PM · Lock in 4h 48m',badge:'Scheduled',badgeClass:'badge-blue'},
+      appUsage:[
+        {icon:'📘',bg:'#1877f2',name:'YouTube Kids',time:'1h 22m',width:'75%',grad:'linear-gradient(90deg,#1877f2,#4fa3ff)',blocked:false},
+        {icon:'🎮',bg:'#ff6b35',name:'Roblox',time:'55m',width:'50%',grad:'linear-gradient(90deg,#ff6b35,#ffa67a)',blocked:false},
+        {icon:'📚',bg:'#7c3aed',name:'Khan Academy',time:'40m',width:'36%',grad:'linear-gradient(90deg,#7c3aed,#a78bfa)',blocked:false},
+        {icon:'💬',bg:'#25d366',name:'WhatsApp',time:'28m',width:'25%',grad:'linear-gradient(90deg,#25d366,#7ee8a0)',blocked:false},
+        {icon:'📷',bg:'#e91e63',name:'TikTok',time:'BLOCKED',width:'0%',grad:'',blocked:true}
+      ],
+      alerts:[
+        {color:'var(--danger)',msg:'Attempted to open <strong>TikTok</strong> — blocked',time:'Today, 4:15 PM'},
+        {color:'var(--warn)',msg:'YouTube Kids limit reached (1h 30m)',time:'Today, 3:50 PM'},
+        {color:'var(--accent)',msg:'Arrived at <strong>Home</strong>',time:'Today, 3:21 PM'},
+        {color:'var(--accent2)',msg:'School zone exit detected',time:'Today, 3:08 PM'}
+      ],
+      weeklyBars:[
+        {height:'55%',bg:'rgba(63,185,80,.6)'},{height:'70%',bg:'rgba(63,185,80,.6)'},{height:'45%',bg:'rgba(63,185,80,.6)'},
+        {height:'90%',bg:'rgba(240,136,62,.7)'},{height:'75%',bg:'rgba(240,136,62,.7)'},{height:'95%',bg:'rgba(248,81,73,.7)'},
+        {height:'62%',bg:'rgba(88,166,255,.6)'}
+      ]
+    },
+    reportsData:{
+      thisWeek:'24h 18m',dailyAvg:'3h 28m',blocked:'14',mostUsed:'📘 YouTube',mostUsedSub:'9h 42m this week',
+      chart:[
+        {height:'55%',bg:'rgba(88,166,255,.5)'},{height:'72%',bg:'rgba(88,166,255,.5)'},{height:'40%',bg:'rgba(63,185,80,.5)'},
+        {height:'88%',bg:'rgba(240,136,62,.6)'},{height:'95%',bg:'rgba(248,81,73,.6)'},{height:'100%',bg:'rgba(248,81,73,.6)'},
+        {height:'65%',bg:'rgba(88,166,255,.5)'}
+      ]
+    },
+    timetableData:{tasks:[]}
+  };
+}
+function getChild(id){for(var i=0;i<children.length;i++)if(children[i].id===id)return children[i];return null;}
+
+/* Show a brief toast message */
+var toastTimer=null;
+function showToast(msg,isErr){
+  var t=document.getElementById('toast');if(!t)return;
+  t.textContent=msg;
+  t.className='toast'+(isErr?' err':'');
+  void t.offsetWidth;/* force reflow */
+  t.classList.add('show');
+  if(toastTimer)clearTimeout(toastTimer);
+  toastTimer=setTimeout(function(){t.classList.remove('show');},2200);
+}
+
+/* Returns active child's appLimits, auto-creating a default child if none exists */
+function getActiveLimits(){
+  if(currentViewId===null){
+    /* Auto-create a default child so saves always work */
+    autoCreateDefaultChild();
+  }
+  var c=getChild(currentViewId);
+  return c?c.appLimits:null;
+}
+
+function autoCreateDefaultChild(){
+  if(children.length>0){
+    selectChildView(children[0].id);
+    return;
+  }
+  var ch={id:uidCounter++,name:'Child',active:true,color:AVATAR_COLORS[0]};
+  var def=makeDefaultState();ch.switches=def.switches;ch.sites=def.sites;ch.appLimits=def.appLimits;ch.scheduleLimits=def.scheduleLimits;
+  ch.totalTimeLimitData=def.totalTimeLimitData;ch.tclData=def.tclData;ch.tclBlockAllData=def.tclBlockAllData;ch.tclBlockSpecificData=def.tclBlockSpecificData;
+  ch.dashData=def.dashData;ch.reportsData=def.reportsData;ch.timetableData=def.timetableData;
+  children.push(ch);
+  currentViewId=ch.id;
+  renderHeader();renderChildrenList();renderAppList();renderSummaryCal();
+  updateNoChildBanner();
+}
+
+function updateNoChildBanner(){
+  var b=document.getElementById('no-child-banner');if(!b)return;
+  b.style.display=(currentViewId===null&&children.length===0)?'flex':'none';
+}
+
+/* ═══════════════════════════════════════════
+   APP LIST RENDER
+═══════════════════════════════════════════ */
+function renderAppList(){
+  var con=document.getElementById('app-list-container');if(!con)return;
+  con.innerHTML='';
+  var lims=getActiveLimits();
+  for(var i=0;i<APP_LIST.length;i++){
+    var a=APP_LIST[i];
+    var lim=lims?lims[a.id]:{enabled:false,limitType:null,timeLimitData:null,clockLimitData:null};
+    var desc='No limit set';
+    if(lim&&lim.limitType==='time'&&lim.timeLimitData){var td=lim.timeLimitData;desc='⏱ Time: '+parseInt(td.h)+'h '+pZ(parseInt(td.m))+'m '+pZ(parseInt(td.s))+'s';}
+    else if(lim&&lim.limitType==='clock'&&lim.clockLimitData){var cd=lim.clockLimitData;desc='🕑 Clock: '+cd.sh+':'+pZ(cd.sm)+' '+cd.sa+' – '+cd.eh+':'+pZ(cd.em)+' '+cd.ea;}
+    var hasLim=lim&&lim.limitType!==null;
+    var pillClass=lim&&lim.limitType==='time'?'time':'clock';
+    var on=lim&&lim.enabled;
+    var isBlocked=lim&&lim.blocked;
+    var row=document.createElement('div');row.className='app-row'+(isBlocked?' blocked':'');row.id='ar-'+a.id;
+    row.innerHTML=
+      '<div class="v1-main">'+
+        '<div class="v1-icon" style="background:'+a.bg+'">'+a.icon+'</div>'+
+        '<div class="v1-name">'+a.name+'</div>'+
+        '<div class="v1-actions">'+
+          '<button class="app-block-btn '+(isBlocked?'is-blocked':'unblocked')+'" onclick="toggleAppBlock(\''+a.id+'\')">'+(isBlocked?'✔':'✕')+'</button>'+
+          '<div class="v1-sw'+(on?' on':'')+'" onclick="toggleAppEnabled(\''+a.id+'\',this)"></div>'+
+          (hasLim
+            ?'<button class="v1-limit-btn remove" onclick="removeAppLimit(\''+a.id+'\')">❌ Remove</button>'
+            :'<button class="v1-limit-btn add" onclick="openLimitPanel(\''+a.id+'\')">＋ Limit</button>')+
+        '</div>'+
+      '</div>'+
+      '<div class="v1-limit-strip'+(hasLim?' show':'')+'" id="v1-strip-'+a.id+'">'+
+        (hasLim?'<div class="v1-limit-pill '+pillClass+'">'+desc+'</div>':'')+
+      '</div>'+
+      '<div class="limit-panel" id="lp-'+a.id+'">'+
+        '<div class="v1-pick-btn" onclick="openLimitEditor(\''+a.id+'\',\'time\')"><div class="v1-pick-icon">⏱</div><div class="v1-pick-label">Time Limit</div><div class="v1-pick-sub">Daily duration</div></div>'+
+        '<div class="v1-pick-btn" onclick="openLimitEditor(\''+a.id+'\',\'clock\')"><div class="v1-pick-icon">🕑</div><div class="v1-pick-label">Clock Limit</div><div class="v1-pick-sub">Block time range</div></div>'+
+      '</div>';
+    con.appendChild(row);
+  }
+}
+
+function openLimitPanel(appId){
+  var panels=document.querySelectorAll('.limit-panel');
+  for(var i=0;i<panels.length;i++){if(panels[i].id!=='lp-'+appId)panels[i].classList.remove('show');}
+  var p=document.getElementById('lp-'+appId);if(p)p.classList.toggle('show');
+}
+function toggleAppEnabled(appId,el){
+  el.classList.toggle('on');
+  var lims=getActiveLimits();if(lims&&lims[appId])lims[appId].enabled=el.classList.contains('on');
+}
+function removeAppLimit(appId){
+  var lims=getActiveLimits();
+  if(lims)lims[appId]={enabled:false,limitType:null,timeLimitData:null,clockLimitData:null,blocked:false};
+  renderAppList();
+}
+function toggleAppBlock(appId){
+  var lims=getActiveLimits();if(!lims)return;
+  if(!lims[appId])lims[appId]={enabled:false,limitType:null,timeLimitData:null,clockLimitData:null,blocked:false};
+  lims[appId].blocked=!lims[appId].blocked;
+  renderAppList();
+}
+
+/* ═══════════════════════════════════════════
+   LIMIT EDITOR (app context)
+═══════════════════════════════════════════ */
+function openLimitEditor(appId,type){
+  activeAppId=appId;activeLimitType=type;activeLimitContext='app';
+  var app=null;for(var i=0;i<APP_LIST.length;i++)if(APP_LIST[i].id===appId){app=APP_LIST[i];break;}
+  var lims=getActiveLimits();
+  var existing=lims?lims[appId]:null;
+  var p=document.getElementById('lp-'+appId);if(p)p.classList.remove('show');
+
+  if(type==='time'){
+    var td=(existing&&existing.timeLimitData)?existing.timeLimitData:{h:0,m:30,s:0,alwaysOn:false,days:[false,false,false,false,false,false,false],scheduleLimits:{}};
+    document.getElementById('tl-sheet-title').textContent='Time Limit — '+(app?app.name:'App');
+    dialSetVal(document.getElementById('tl-h'),VALS_H24,pZ(parseInt(td.h)||0));
+    dialSetVal(document.getElementById('tl-m'),VALS_MIN,pZ(parseInt(td.m)||0));
+    dialSetVal(document.getElementById('tl-s'),VALS_SEC,pZ(parseInt(td.s)||0));
+    document.getElementById('tl-sched-btn').style.display='';
+    document.getElementById('tl-sheet').style.zIndex='600';
+    /* App context: ensure Save visible, Cancel restored */
+    document.getElementById('tl-save-btn').style.display='';
+    var tlcb=document.getElementById('tl-cancel-btn');tlcb.textContent='Cancel';tlcb.onclick=function(){closeSheet('tl-sheet');};
+    openSheet('tl-sheet');
+  } else {
+    var cd=(existing&&existing.clockLimitData)?existing.clockLimitData:{sh:9,sm:0,sa:'AM',eh:5,em:0,ea:'PM',alwaysOn:false,days:[false,false,false,false,false,false,false],scheduleLimits:{}};
+    document.getElementById('cl-sheet-title').textContent='Clock Limit — '+(app?app.name:'App');
+    dialSetVal(document.getElementById('cl-sh'),VALS_H12,String(parseInt(cd.sh)||1));
+    dialSetVal(document.getElementById('cl-sm'),VALS_MIN,pZ(parseInt(cd.sm)||0));
+    ampmSet('cl-sa',cd.sa||'AM','g');
+    dialSetVal(document.getElementById('cl-eh'),VALS_H12,String(parseInt(cd.eh)||5));
+    dialSetVal(document.getElementById('cl-em'),VALS_MIN,pZ(parseInt(cd.em)||0));
+    ampmSet('cl-ea',cd.ea||'PM','r');
+    document.getElementById('cl-sched-btn').style.display='';
+    document.getElementById('cl-sheet').style.zIndex='605';
+    /* App context: ensure Save visible, Cancel restored */
+    document.getElementById('cl-save-btn').style.display='';
+    var clcb=document.getElementById('cl-cancel-btn');clcb.textContent='Cancel';clcb.onclick=function(){closeSheet('cl-sheet');};
+    openSheet('cl-sheet');
+  }
+}
+
+/* ═══════════════════════════════════════════
+   LIMIT EDITOR (schedule context — from date-sched-sheet)
+═══════════════════════════════════════════ */
+function openSchedLimit(appId,type){
+  activeAppId=appId;activeLimitType=type;activeLimitContext='schedule';
+  var app=null;for(var i=0;i<APP_LIST.length;i++)if(APP_LIST[i].id===appId){app=APP_LIST[i];break;}
+  var ch=getChild(currentViewId);
+  var dk=activeScheduleDateKey;
+  /* Load from pending first, then from saved */
+  var savedLim=(ch&&ch.scheduleLimits&&ch.scheduleLimits[dk]&&ch.scheduleLimits[dk][appId])||null;
+  var sLim=(pendingSchedLimits[appId]!==undefined)?pendingSchedLimits[appId]:savedLim;
+
+  if(type==='time'){
+    var td=(sLim&&sLim.type==='time'&&sLim.timeLimitData)?sLim.timeLimitData:{h:0,m:30,s:0,alwaysOn:false,days:[false,false,false,false,false,false,false],scheduleLimits:{}};
+    document.getElementById('tl-sheet-title').textContent='Time Limit — '+(app?app.name:'App');
+    dialSetVal(document.getElementById('tl-h'),VALS_H24,pZ(parseInt(td.h)||0));
+    dialSetVal(document.getElementById('tl-m'),VALS_MIN,pZ(parseInt(td.m)||0));
+    dialSetVal(document.getElementById('tl-s'),VALS_SEC,pZ(parseInt(td.s)||0));
+    document.getElementById('tl-sched-btn').style.display='none';
+    document.getElementById('tl-sheet').style.zIndex='720';
+    /* Schedule context: hide Save, rename Cancel to Done */
+    document.getElementById('tl-save-btn').style.display='none';
+    var tlcb=document.getElementById('tl-cancel-btn');tlcb.textContent='Done';tlcb.onclick=function(){applyTimeLimitToPending();};
+    openSheet('tl-sheet');
+  } else {
+    var cd=(sLim&&sLim.type==='clock'&&sLim.clockLimitData)?sLim.clockLimitData:{sh:9,sm:0,sa:'AM',eh:5,em:0,ea:'PM',alwaysOn:false,days:[false,false,false,false,false,false,false],scheduleLimits:{}};
+    document.getElementById('cl-sheet-title').textContent='Clock Limit — '+(app?app.name:'App');
+    dialSetVal(document.getElementById('cl-sh'),VALS_H12,String(parseInt(cd.sh)||1));
+    dialSetVal(document.getElementById('cl-sm'),VALS_MIN,pZ(parseInt(cd.sm)||0));
+    ampmSet('cl-sa',cd.sa||'AM','g');
+    dialSetVal(document.getElementById('cl-eh'),VALS_H12,String(parseInt(cd.eh)||5));
+    dialSetVal(document.getElementById('cl-em'),VALS_MIN,pZ(parseInt(cd.em)||0));
+    ampmSet('cl-ea',cd.ea||'PM','r');
+    document.getElementById('cl-sched-btn').style.display='none';
+    document.getElementById('cl-sheet').style.zIndex='720';
+    /* Schedule context: hide Save, rename Cancel to Done */
+    document.getElementById('cl-save-btn').style.display='none';
+    var clcb=document.getElementById('cl-cancel-btn');clcb.textContent='Done';clcb.onclick=function(){applyClockLimitToPending();};
+    openSheet('cl-sheet');
+  }
+}
+
+function removeSchedLimit(appId){
+  var ch=getChild(currentViewId);if(!ch)return;
+  var dk=activeScheduleDateKey;
+  /* Clear from pending */
+  delete pendingSchedLimits[appId];
+  delete pendingSchedBlocked[appId];
+  /* Remove from saved */
+  if(ch.scheduleLimits&&ch.scheduleLimits[dk]){
+    delete ch.scheduleLimits[dk][appId];
+  }
+  renderDateSchedApps(dk);
+  refreshScheduleCalendars();
+}
+function toggleSchedBlock(appId){
+  var cur=pendingSchedBlocked.hasOwnProperty(appId)?pendingSchedBlocked[appId]:false;
+  pendingSchedBlocked[appId]=!cur;
+  renderDateSchedApps(activeScheduleDateKey);
+}
+
+function applyTimeLimitToPending(){
+  var newData={
+    h:parseInt(dialRead(document.getElementById('tl-h'),VALS_H24))||0,
+    m:parseInt(dialRead(document.getElementById('tl-m'),VALS_MIN))||0,
+    s:parseInt(dialRead(document.getElementById('tl-s'),VALS_SEC))||0,
+    alwaysOn:false,
+    days:[false,false,false,false,false,false,false],
+    scheduleLimits:{}
+  };
+  pendingSchedLimits[activeAppId]={type:'time',timeLimitData:newData,clockLimitData:null};
+  pendingSchedBlocked[activeAppId]=false;
+  closeSheet('tl-sheet');
+  renderDateSchedApps(activeScheduleDateKey);
+}
+
+function applyClockLimitToPending(){
+  var newData={
+    sh:parseInt(dialRead(document.getElementById('cl-sh'),VALS_H12))||9,
+    sm:parseInt(dialRead(document.getElementById('cl-sm'),VALS_MIN))||0,
+    sa:ampmRead('cl-sa'),
+    eh:parseInt(dialRead(document.getElementById('cl-eh'),VALS_H12))||5,
+    em:parseInt(dialRead(document.getElementById('cl-em'),VALS_MIN))||0,
+    ea:ampmRead('cl-ea'),
+    alwaysOn:false,
+    days:[false,false,false,false,false,false,false],
+    scheduleLimits:{}
+  };
+  pendingSchedLimits[activeAppId]={type:'clock',timeLimitData:null,clockLimitData:newData};
+  pendingSchedBlocked[activeAppId]=false;
+  closeSheet('cl-sheet');
+  renderDateSchedApps(activeScheduleDateKey);
+}
+
+function saveDateSchedule(){
+  var ch=getChild(currentViewId);
+  if(!ch){showToast('No child selected',true);return;}
+  var dk=activeScheduleDateKey;
+  if(!Object.keys(pendingSchedLimits).length&&!Object.keys(pendingSchedBlocked).length){showToast('No changes to save',true);return;}
+  var hasExisting=ch.scheduleLimits&&ch.scheduleLimits[dk]&&Object.keys(ch.scheduleLimits[dk]).length>0;
+  if(hasExisting){
+    document.getElementById('date-save-overlay').classList.add('show');
+  } else {
+    doSaveDateSchedule();
+  }
+}
+
+function doSaveDateSchedule(){
+  var ch=getChild(currentViewId);
+  var dk=activeScheduleDateKey;
+  if(!ch.scheduleLimits[dk])ch.scheduleLimits[dk]={};
+  for(var appId in pendingSchedLimits){
+    ch.scheduleLimits[dk][appId]=pendingSchedLimits[appId];
+  }
+  for(var appId2 in pendingSchedBlocked){
+    if(!ch.scheduleLimits[dk][appId2])ch.scheduleLimits[dk][appId2]={type:null,timeLimitData:null,clockLimitData:null};
+    ch.scheduleLimits[dk][appId2].blocked=pendingSchedBlocked[appId2];
+  }
+  pendingSchedLimits={};
+  pendingSchedBlocked={};
+  renderDateSchedApps(dk);
+  refreshScheduleCalendars();
+  showToast('✓ Schedule saved');
+  closeDateSchedSheet();
+}
+
+function confirmDateSave(){
+  document.getElementById('date-save-overlay').classList.remove('show');
+  doSaveDateSchedule();
+}
+
+function cancelDateSave(){
+  document.getElementById('date-save-overlay').classList.remove('show');
+}
+
+/* ═══════════════════════════════════════════
+   SAVE TIME LIMIT
+═══════════════════════════════════════════ */
+function saveTimeLimit(){
+  var newData={
+    h:parseInt(dialRead(document.getElementById('tl-h'),VALS_H24))||0,
+    m:parseInt(dialRead(document.getElementById('tl-m'),VALS_MIN))||0,
+    s:parseInt(dialRead(document.getElementById('tl-s'),VALS_SEC))||0,
+    alwaysOn:false,
+    days:[false,false,false,false,false,false,false],
+    scheduleLimits:{}
+  };
+  if(activeLimitContext==='schedule'){
+    var ch=getChild(currentViewId);
+    var dk=activeScheduleDateKey;
+    var existing=ch&&ch.scheduleLimits&&ch.scheduleLimits[dk]&&ch.scheduleLimits[dk][activeAppId];
+    if(existing){pendingOverwriteCb=function(){doSaveTimeLimit(newData);};openOverwrite();}
+    else doSaveTimeLimit(newData);
+  } else {
+    var lims=getActiveLimits();
+    var ex=lims&&lims[activeAppId];
+    if(ex&&ex.limitType){
+      if(ex.timeLimitData&&ex.timeLimitData.scheduleLimits) newData.scheduleLimits=ex.timeLimitData.scheduleLimits;
+      pendingOverwriteCb=function(){doSaveTimeLimit(newData);};openOverwrite();
+    } else doSaveTimeLimit(newData);
+  }
+}
+
+function doSaveTimeLimit(d){
+  if(activeLimitContext==='schedule'){
+    var ch=getChild(currentViewId);
+    if(!ch){showToast('No child selected',true);return;}
+    var dk=activeScheduleDateKey;
+    if(!ch.scheduleLimits[dk])ch.scheduleLimits[dk]={};
+    ch.scheduleLimits[dk][activeAppId]={type:'time',timeLimitData:d,clockLimitData:null};
+    closeSheet('tl-sheet');
+    renderDateSchedApps(dk);
+    refreshScheduleCalendars();
+    showToast('✓ Time limit saved for date');
+  } else {
+    var lims=getActiveLimits();
+    if(!lims){showToast('No child selected',true);return;}
+    lims[activeAppId]={enabled:true,limitType:'time',timeLimitData:d,clockLimitData:null,blocked:false};
+    closeSheet('tl-sheet');
+    renderAppList();
+    showToast('✓ Time limit saved');
+  }
+}
+
+/* ═══════════════════════════════════════════
+   SAVE CLOCK LIMIT
+═══════════════════════════════════════════ */
+function saveClockLimit(){
+  var newData={
+    sh:parseInt(dialRead(document.getElementById('cl-sh'),VALS_H12))||9,
+    sm:parseInt(dialRead(document.getElementById('cl-sm'),VALS_MIN))||0,
+    sa:ampmRead('cl-sa'),
+    eh:parseInt(dialRead(document.getElementById('cl-eh'),VALS_H12))||5,
+    em:parseInt(dialRead(document.getElementById('cl-em'),VALS_MIN))||0,
+    ea:ampmRead('cl-ea'),
+    alwaysOn:false,
+    days:[false,false,false,false,false,false,false],
+    scheduleLimits:{}
+  };
+  if(activeLimitContext==='schedule'){
+    var ch=getChild(currentViewId);
+    var dk=activeScheduleDateKey;
+    var existing=ch&&ch.scheduleLimits&&ch.scheduleLimits[dk]&&ch.scheduleLimits[dk][activeAppId];
+    if(existing){pendingOverwriteCb=function(){doSaveClockLimit(newData);};openOverwrite();}
+    else doSaveClockLimit(newData);
+  } else {
+    var lims=getActiveLimits();
+    var ex=lims&&lims[activeAppId];
+    if(ex&&ex.limitType){
+      if(ex.clockLimitData&&ex.clockLimitData.scheduleLimits) newData.scheduleLimits=ex.clockLimitData.scheduleLimits;
+      pendingOverwriteCb=function(){doSaveClockLimit(newData);};openOverwrite();
+    } else doSaveClockLimit(newData);
+  }
+}
+
+function doSaveClockLimit(d){
+  if(activeLimitContext==='schedule'){
+    var ch=getChild(currentViewId);
+    if(!ch){showToast('No child selected',true);return;}
+    var dk=activeScheduleDateKey;
+    if(!ch.scheduleLimits[dk])ch.scheduleLimits[dk]={};
+    ch.scheduleLimits[dk][activeAppId]={type:'clock',timeLimitData:null,clockLimitData:d};
+    closeSheet('cl-sheet');
+    renderDateSchedApps(dk);
+    refreshScheduleCalendars();
+    showToast('✓ Clock limit saved for date');
+  } else {
+    var lims=getActiveLimits();
+    if(!lims){showToast('No child selected',true);return;}
+    lims[activeAppId]={enabled:true,limitType:'clock',timeLimitData:null,clockLimitData:d,blocked:false};
+    closeSheet('cl-sheet');
+    renderAppList();
+    showToast('✓ Clock limit saved');
+  }
+}
+
+/* ═══════════════════════════════════════════
+   APP-LIMIT SCHEDULE CALENDAR (📅 Schedule button in tl/cl sheets)
+═══════════════════════════════════════════ */
+function openLimitSchedCal(type){
+  activeLimitType=type;
+  renderNpCal('lsched-cal-container',TODAY_BS.year,TODAY_BS.month,'lschedDateClick',activeAppId);
+  openSheet('lsched-sheet');
+}
+
+function lschedDateClick(containerId,dateKey){
+  editingDateKey=dateKey;
+  var lims=getActiveLimits();
+  var existing=lims&&lims[activeAppId]?lims[activeAppId]:null;
+  var parts=dateKey.split('-');
+  var dispDate=NP_MONTHS[parseInt(parts[1])].np+' '+parseInt(parts[2])+', '+parts[0];
+  document.getElementById('dl-sheet-title').textContent=(activeLimitType==='time'?'Time Limit':'Clock Limit')+' override';
+  document.getElementById('dl-sheet-sub').textContent=dispDate;
+  if(activeLimitType==='time'){
+    document.getElementById('dl-time-section').style.display='';
+    document.getElementById('dl-clock-section').style.display='none';
+    var prev=(existing&&existing.timeLimitData&&existing.timeLimitData.scheduleLimits&&existing.timeLimitData.scheduleLimits[dateKey])||{h:0,m:30,s:0};
+    dialSetVal(document.getElementById('dl-h'),VALS_H24,pZ(parseInt(prev.h)||0));
+    dialSetVal(document.getElementById('dl-m'),VALS_MIN,pZ(parseInt(prev.m)||0));
+    dialSetVal(document.getElementById('dl-s'),VALS_SEC,pZ(parseInt(prev.s)||0));
+  } else {
+    document.getElementById('dl-time-section').style.display='none';
+    document.getElementById('dl-clock-section').style.display='';
+    var prevC=(existing&&existing.clockLimitData&&existing.clockLimitData.scheduleLimits&&existing.clockLimitData.scheduleLimits[dateKey])||{sh:9,sm:0,sa:'AM',eh:5,em:0,ea:'PM'};
+    dialSetVal(document.getElementById('dl-sh'),VALS_H12,String(parseInt(prevC.sh)||1));
+    dialSetVal(document.getElementById('dl-sm'),VALS_MIN,pZ(parseInt(prevC.sm)||0));
+    ampmSet('dl-sa',prevC.sa||'AM','g');
+    dialSetVal(document.getElementById('dl-eh'),VALS_H12,String(parseInt(prevC.eh)||5));
+    dialSetVal(document.getElementById('dl-em'),VALS_MIN,pZ(parseInt(prevC.em)||0));
+    ampmSet('dl-ea',prevC.ea||'PM','r');
+  }
+  openSheet('dl-sheet');
+}
+
+function saveDateLimit(){
+  var lims=getActiveLimits();if(!lims||!activeAppId||!editingDateKey)return;
+  var existing=lims[activeAppId];
+  var hasEx=false;
+  if(activeLimitType==='time'&&existing&&existing.timeLimitData&&existing.timeLimitData.scheduleLimits&&existing.timeLimitData.scheduleLimits[editingDateKey])hasEx=true;
+  if(activeLimitType==='clock'&&existing&&existing.clockLimitData&&existing.clockLimitData.scheduleLimits&&existing.clockLimitData.scheduleLimits[editingDateKey])hasEx=true;
+  var dk=editingDateKey;
+  function doSave(){
+    if(!lims[activeAppId]||!lims[activeAppId].limitType){
+      if(activeLimitType==='time')lims[activeAppId]={enabled:false,limitType:'time',timeLimitData:{h:0,m:0,s:0,alwaysOn:false,days:[false,false,false,false,false,false,false],scheduleLimits:{}},clockLimitData:null};
+      else lims[activeAppId]={enabled:false,limitType:'clock',timeLimitData:null,clockLimitData:{sh:9,sm:0,sa:'AM',eh:5,em:0,ea:'PM',alwaysOn:false,days:[false,false,false,false,false,false,false],scheduleLimits:{}}};
+    }
+    if(activeLimitType==='time'){
+      if(!lims[activeAppId].timeLimitData.scheduleLimits)lims[activeAppId].timeLimitData.scheduleLimits={};
+      lims[activeAppId].timeLimitData.scheduleLimits[dk]={h:parseInt(dialRead(document.getElementById('dl-h'),VALS_H24))||0,m:parseInt(dialRead(document.getElementById('dl-m'),VALS_MIN))||0,s:parseInt(dialRead(document.getElementById('dl-s'),VALS_SEC))||0};
+    } else {
+      if(!lims[activeAppId].clockLimitData.scheduleLimits)lims[activeAppId].clockLimitData.scheduleLimits={};
+      lims[activeAppId].clockLimitData.scheduleLimits[dk]={sh:parseInt(dialRead(document.getElementById('dl-sh'),VALS_H12))||9,sm:parseInt(dialRead(document.getElementById('dl-sm'),VALS_MIN))||0,sa:ampmRead('dl-sa'),eh:parseInt(dialRead(document.getElementById('dl-eh'),VALS_H12))||5,em:parseInt(dialRead(document.getElementById('dl-em'),VALS_MIN))||0,ea:ampmRead('dl-ea')};
+    }
+    closeSheet('dl-sheet');
+    renderNpCal('lsched-cal-container',TODAY_BS.year,TODAY_BS.month,'lschedDateClick',activeAppId);
+    renderAppList();
+    editingDateKey=null;
+    showToast('✓ Date override saved');
+  }
+  if(hasEx){pendingOverwriteCb=doSave;openOverwrite();}else doSave();
+}
+
+/* ═══════════════════════════════════════════
+   NEPALI CALENDAR RENDER
+   appId: optional — if set, checks app-level date overrides
+          if null, checks child.scheduleLimits (Set Schedule feature)
+═══════════════════════════════════════════ */
+function renderNpCal(containerId,year,month,onClickFn,appId){
+  var con=document.getElementById(containerId);if(!con)return;
+  con.setAttribute('data-year',year);con.setAttribute('data-month',month);con.setAttribute('data-fn',onClickFn);
+  if(appId)con.setAttribute('data-appid',appId);else con.removeAttribute('data-appid');
+  var totalDays=(BS_DAYS[year]||BS_DAYS[2082])[month]||30;
+  var mi=NP_MONTHS[month];
+  var startKey=year+'-'+month;
+  var adS=BS_STARTS[startKey];
+  var startDow=0;
+  if(adS){var sd=new Date(adS.y,adS.m,adS.d);startDow=sd.getDay();}
+  var lims=getActiveLimits();
+  var ch=getChild(currentViewId);
+
+  var html='<div class="np-cal-header">'+
+    '<button class="np-cal-nav" onclick="npCalNav(\''+containerId+'\',-1)">‹</button>'+
+    '<div style="text-align:center;"><div style="font-size:18px;font-weight:700;">'+mi.np+'</div><div style="font-size:10px;color:var(--muted);margin-top:1px;">'+mi.en+' · '+year+' BS</div></div>'+
+    '<button class="np-cal-nav" onclick="npCalNav(\''+containerId+'\',1)">›</button>'+
+  '</div><div class="np-cal-grid">';
+  var dn=['Su','Mo','Tu','We','Th','Fr','Sa'];
+  for(var d=0;d<7;d++)html+='<div class="np-cal-head">'+dn[d]+'</div>';
+  for(var e=0;e<startDow;e++)html+='<div></div>';
+  for(var day=1;day<=totalDays;day++){
+    var dk=year+'-'+month+'-'+day;
+    var isT=(year===TODAY_BS.year&&month===TODAY_BS.month&&day===TODAY_BS.day);
+    var hasLim=false;
+    if(appId){
+      /* Check app-level date overrides */
+      if(lims&&lims[appId]){var al=lims[appId];if(al.timeLimitData&&al.timeLimitData.scheduleLimits&&al.timeLimitData.scheduleLimits[dk])hasLim=true;if(!hasLim&&al.clockLimitData&&al.clockLimitData.scheduleLimits&&al.clockLimitData.scheduleLimits[dk])hasLim=true;}
+    } else {
+      /* Check child.scheduleLimits (Set Schedule) */
+      if(ch&&ch.scheduleLimits&&ch.scheduleLimits[dk]){for(var k in ch.scheduleLimits[dk]){if(ch.scheduleLimits[dk][k]){hasLim=true;break;}}}
+    }
+    var enD='';
+    if(adS){var ad=new Date(adS.y,adS.m,adS.d+day-1);enD=ad.getDate()+' '+EN_MONS[ad.getMonth()];}
+    var cls='np-cell'+(isT?' today':'')+(hasLim?' has-lim':'');
+    html+='<div class="'+cls+'" onclick="'+onClickFn+'(\''+containerId+'\',\''+dk+'\')">'+
+      '<div class="np-d">'+day+'</div>'+
+      (enD?'<div class="en-d">'+enD+'</div>':'')+
+      (hasLim?'<div class="np-lim-dot"></div>':'')+
+    '</div>';
+  }
+  html+='</div>';
+  con.innerHTML=html;
+}
+
+function npCalNav(containerId,dir){
+  var con=document.getElementById(containerId);if(!con)return;
+  var yr=parseInt(con.getAttribute('data-year'));
+  var mo=parseInt(con.getAttribute('data-month'));
+  var fn=con.getAttribute('data-fn');
+  var aid=con.getAttribute('data-appid')||null;
+  mo+=dir;if(mo<0){mo=11;yr--;}if(mo>11){mo=0;yr++;}
+  renderNpCal(containerId,yr,mo,fn,aid||undefined);
+}
+
+/* ═══════════════════════════════════════════
+   SET SCHEDULE — MAIN CALENDAR
+═══════════════════════════════════════════ */
+function openMainSchedCal(){
+  renderNpCal('main-sched-cal',TODAY_BS.year,TODAY_BS.month,'mainSchedDateClick');
+  openSheet('main-sched-sheet');
+}
+
+function mainSchedDateClick(containerId,dateKey){
+  activeScheduleDateKey=dateKey;
+  activeLimitContext='schedule';
+  pendingSchedLimits={};
+  pendingSchedBlocked={};
+  var parts=dateKey.split('-');
+  var dispDate=NP_MONTHS[parseInt(parts[1])].np+' '+parseInt(parts[2])+', '+parts[0];
+  document.getElementById('ds-title').textContent=NP_MONTHS[parseInt(parts[1])].np+' '+parseInt(parts[2]);
+  document.getElementById('ds-sub').textContent=dispDate+' BS';
+  renderDateSchedApps(dateKey);
+  openSheet('date-sched-sheet');
+}
+
+function closeDateSchedSheet(){
+  closeSheet('date-sched-sheet');
+  activeLimitContext='app';
+  activeScheduleDateKey=null;
+  pendingSchedLimits={};
+  pendingSchedBlocked={};
+}
+
+function renderDateSchedApps(dateKey){
+  var con=document.getElementById('ds-app-list');if(!con)return;
+  con.innerHTML='';
+  var ch=getChild(currentViewId);
+  var savedLims=(ch&&ch.scheduleLimits&&ch.scheduleLimits[dateKey])?ch.scheduleLimits[dateKey]:{};
+  for(var i=0;i<APP_LIST.length;i++){
+    var a=APP_LIST[i];
+    /* Pending overrides saved; undefined pending means fall back to saved */
+    var lim=(pendingSchedLimits[a.id]!==undefined)?pendingSchedLimits[a.id]:savedLims[a.id];
+    var limTxt='<span>No limit set</span>';
+    if(lim&&lim.type==='time'&&lim.timeLimitData){var td=lim.timeLimitData;limTxt='<span>⏱ '+parseInt(td.h)+'h '+pZ(parseInt(td.m))+'m '+pZ(parseInt(td.s))+'s</span>';}
+    else if(lim&&lim.type==='clock'&&lim.clockLimitData){var cd=lim.clockLimitData;limTxt='<span>🕑 '+cd.sh+':'+pZ(cd.sm)+' '+cd.sa+' – '+cd.eh+':'+pZ(cd.em)+' '+cd.ea+'</span>';}
+    var tlSel=(lim&&lim.type==='time')?' sel':'';
+    var clSel=(lim&&lim.type==='clock')?' sel':'';
+    var hasL=!!(lim&&lim.type);
+    var isBlocked=pendingSchedBlocked.hasOwnProperty(a.id)?pendingSchedBlocked[a.id]:!!(lim&&lim.blocked);
+    var row=document.createElement('div');row.className='ds-app-row'+(isBlocked?' blocked':'');row.id='ds-ar-'+a.id;
+    row.innerHTML=
+      '<div class="ds-app-icon" style="background:'+a.bg+'">'+a.icon+'</div>'+
+      '<div class="ds-app-info"><div class="ds-app-name">'+a.name+'</div><div class="ds-app-lim'+(hasL?' has':'')+'">'+limTxt+'</div></div>'+
+      '<div class="ds-btns">'+
+        '<button class="ds-block-btn '+(isBlocked?'is-blocked':'unblocked')+'" onclick="toggleSchedBlock(\''+a.id+'\')">'+(isBlocked?'✔':'✕')+'</button>'+
+        '<button class="ds-btn'+tlSel+'" title="Time Limit" onclick="openSchedLimit(\''+a.id+'\',\'time\')">⏱</button>'+
+        '<button class="ds-btn'+clSel+'" title="Clock Limit" onclick="openSchedLimit(\''+a.id+'\',\'clock\')">🕑</button>'+
+      '</div>';
+    con.appendChild(row);
+  }
+}
+
+/* ═══════════════════════════════════════════
+   SUMMARY CALENDAR (screen time home)
+═══════════════════════════════════════════ */
+function renderSummaryCal(){
+  var con=document.getElementById('summary-cal-container');
+  if(!con)return;
+  renderNpCal('summary-cal-container',TODAY_BS.year,TODAY_BS.month,'summaryDateClick');
+}
+
+function summaryDateClick(containerId,dateKey){
+  var ch=getChild(currentViewId);
+  var parts=dateKey.split('-');
+  var dispDate=NP_MONTHS[parseInt(parts[1])].np+' '+parseInt(parts[2])+', '+parts[0]+' BS';
+  document.getElementById('dd-title').textContent='Schedule for '+NP_MONTHS[parseInt(parts[1])].np+' '+parseInt(parts[2]);
+  document.getElementById('dd-date').textContent=dispDate;
+  var limits=(ch&&ch.scheduleLimits&&ch.scheduleLimits[dateKey])?ch.scheduleLimits[dateKey]:null;
+  var body=document.getElementById('dd-body');
+  if(!limits||Object.keys(limits).length===0){
+    body.innerHTML='<div class="dd-empty">📭 No limits set for this date.<br><span style="color:var(--accent2);cursor:pointer;" onclick="document.getElementById(\'day-detail-overlay\').classList.remove(\'show\');openMainSchedCal();">+ Set limits for this day</span></div>';
+  } else {
+    var html='';
+    for(var ai=0;ai<APP_LIST.length;ai++){
+      var app=APP_LIST[ai];var lim=limits[app.id];if(!lim)continue;
+      var lt='';
+      if(lim.type==='time'&&lim.timeLimitData){var td=lim.timeLimitData;lt='⏱ '+parseInt(td.h)+'h '+pZ(parseInt(td.m))+'m '+pZ(parseInt(td.s))+'s';}
+      else if(lim.type==='clock'&&lim.clockLimitData){var cd=lim.clockLimitData;lt='🕑 '+cd.sh+':'+pZ(cd.sm)+' '+cd.sa+' – '+cd.eh+':'+pZ(cd.em)+' '+cd.ea;}
+      html+='<div class="dd-row"><div class="dd-icon" style="background:'+app.bg+'">'+app.icon+'</div><div><div class="dd-info-name">'+app.name+'</div><div class="dd-info-lim">'+lt+'</div></div></div>';
+    }
+    body.innerHTML=html;
+  }
+  document.getElementById('day-detail-overlay').classList.add('show');
+}
+
+function refreshScheduleCalendars(){
+  /* Re-render main-sched-cal at its current month */
+  var mc=document.getElementById('main-sched-cal');
+  if(mc&&mc.getAttribute('data-year')){
+    renderNpCal('main-sched-cal',parseInt(mc.getAttribute('data-year')),parseInt(mc.getAttribute('data-month')),'mainSchedDateClick');
+  }
+  /* Re-render summary calendar */
+  renderSummaryCal();
+}
+
+/* ═══════════════════════════════════════════
+   DAY SELECTOR
+═══════════════════════════════════════════ */
+var DAY_NAMES=['Su','Mo','Tu','We','Th','Fr','Sa'];
+function buildDaySel(containerId,selArr){
+  var el=document.getElementById(containerId);if(!el)return;el.innerHTML='';
+  for(var i=0;i<7;i++){
+    var b=document.createElement('div');b.className='day-btn'+(selArr&&selArr[i]?' on':'');
+    b.textContent=DAY_NAMES[i];
+    b.onclick=(function(btn){return function(){btn.classList.toggle('on');};})(b);
+    el.appendChild(b);
+  }
+}
+function readDaySel(containerId){
+  var el=document.getElementById(containerId);var r=[];if(!el)return[false,false,false,false,false,false,false];
+  var bs=el.querySelectorAll('.day-btn');for(var i=0;i<bs.length;i++)r.push(bs[i].classList.contains('on'));return r;
+}
+
+/* ═══════════════════════════════════════════
+   SHEET / OVERLAY HELPERS
+═══════════════════════════════════════════ */
+function openSheet(id){document.getElementById(id).classList.add('show');}
+function closeSheet(id){
+  var el=document.getElementById(id);if(!el)return;
+  el.classList.remove('show');
+  if(id==='tl-sheet'){el.style.zIndex='600';document.getElementById('tl-sched-btn').style.display='';}
+  if(id==='cl-sheet'){el.style.zIndex='605';document.getElementById('cl-sched-btn').style.display='';}
+  if(id==='tl-sheet'||id==='cl-sheet') activeLimitContext='app';
+}
+function openOverwrite(){document.getElementById('overwrite-overlay').classList.add('show');}
+function confirmOverwrite(){document.getElementById('overwrite-overlay').classList.remove('show');if(pendingOverwriteCb)pendingOverwriteCb();pendingOverwriteCb=null;}
+function cancelOverwrite(){document.getElementById('overwrite-overlay').classList.remove('show');pendingOverwriteCb=null;}
+
+/* ═══════════════════════════════════════════
+   CHILDREN MANAGEMENT
+═══════════════════════════════════════════ */
+function saveDomToChild(id){
+  var ch=getChild(id);if(!ch)return;
+  var sws=document.querySelectorAll('[data-sid]');for(var i=0;i<sws.length;i++)ch.switches[sws[i].getAttribute('data-sid')]=sws[i].classList.contains('on');
+  var rows=document.querySelectorAll('#blocked-sites-list .site-row');ch.sites=[];for(var k=0;k<rows.length;k++){var sp=rows[k].querySelector('span.site-name');if(sp)ch.sites.push(sp.textContent);}
+  /* Save TTL and TCL main switch states */
+  var ttlSw=document.getElementById('ttl-main-sw');
+  var tclSw=document.getElementById('tcl-main-sw');
+  if(!ch.totalTimeLimitData)ch.totalTimeLimitData={saved:false,enabled:false,selectedApps:{},h:0,m:0,s:0};
+  if(!ch.tclData)ch.tclData={enabled:false};
+  ch.totalTimeLimitData.enabled=ttlSw?ttlSw.classList.contains('on'):false;
+  ch.tclData.enabled=tclSw?tclSw.classList.contains('on'):false;
+}
+function renderDashboard(){
+  var ch=getChild(currentViewId);
+  var d=ch&&ch.dashData?ch.dashData:null;
+
+  /* Stats row */
+  var sr=document.getElementById('dash-stats-row');
+  if(sr){
+    if(d){
+      sr.innerHTML=
+        '<div class="stat-card"><div class="stat-label">Screen Time</div><div class="stat-value" style="color:'+d.screenTime.color+'">'+d.screenTime.value+'</div><div class="stat-sub">'+d.screenTime.limit+'</div><span class="stat-badge '+d.screenTime.badgeClass+'">'+d.screenTime.badge+'</span></div>'+
+        '<div class="stat-card"><div class="stat-label">Apps Blocked</div><div class="stat-value" style="color:var(--danger)">'+d.appsBlocked.value+'</div><div class="stat-sub">'+d.appsBlocked.sub+'</div><span class="stat-badge '+d.appsBlocked.badgeClass+'">'+d.appsBlocked.badge+'</span></div>'+
+        '<div class="stat-card"><div class="stat-label">Location</div><div class="stat-value" style="color:var(--accent);font-size:16px;padding-top:4px">'+d.location.value+'</div><div class="stat-sub">'+d.location.sub+'</div><span class="stat-badge '+d.location.badgeClass+'">'+d.location.badge+'</span></div>'+
+        '<div class="stat-card"><div class="stat-label">Bedtime</div><div class="stat-value" style="color:var(--accent2)">'+d.bedtime.value+'</div><div class="stat-sub">'+d.bedtime.sub+'</div><span class="stat-badge '+d.bedtime.badgeClass+'">'+d.bedtime.badge+'</span></div>';
+    } else {
+      sr.innerHTML='<div class="stat-card"><div class="stat-label">Screen Time</div><div class="stat-value" style="color:var(--muted)">—</div><div class="stat-sub">No data</div></div>'+
+        '<div class="stat-card"><div class="stat-label">Apps Blocked</div><div class="stat-value" style="color:var(--muted)">—</div><div class="stat-sub">No data</div></div>'+
+        '<div class="stat-card"><div class="stat-label">Location</div><div class="stat-value" style="color:var(--muted)">—</div><div class="stat-sub">No data</div></div>'+
+        '<div class="stat-card"><div class="stat-label">Bedtime</div><div class="stat-value" style="color:var(--muted)">—</div><div class="stat-sub">No data</div></div>';
+    }
+  }
+
+  /* App usage bars */
+  var au=document.getElementById('dash-app-usage-body');
+  if(au){
+    if(d&&d.appUsage&&d.appUsage.length){
+      var h='';
+      for(var i=0;i<d.appUsage.length;i++){
+        var a=d.appUsage[i];
+        h+='<div class="time-bar-wrap"><div class="time-bar-header"><div class="time-bar-app"><div class="app-icon" style="background:'+a.bg+'">'+a.icon+'</div>'+a.name+'</div><div class="time-bar-time"'+(a.blocked?' style="color:var(--danger)"':'')+'>'+a.time+'</div></div><div class="time-bar-bg"><div class="time-bar-fill" style="width:'+a.width+';background:'+a.grad+'"></div></div></div>';
+      }
+      au.innerHTML=h;
+    } else {
+      au.innerHTML='<div style="font-size:13px;color:var(--muted);padding:8px 0;">No usage data</div>';
+    }
+  }
+
+  /* Alerts */
+  var al=document.getElementById('dash-alerts-body');
+  if(al){
+    if(d&&d.alerts&&d.alerts.length){
+      var ah='';
+      for(var j=0;j<d.alerts.length;j++){
+        var alt=d.alerts[j];
+        ah+='<div class="alert-item"><div class="alert-dot" style="background:'+alt.color+'"></div><div><div class="alert-msg">'+alt.msg+'</div><div class="alert-time">'+alt.time+'</div></div></div>';
+      }
+      al.innerHTML=ah;
+    } else {
+      al.innerHTML='<div style="font-size:13px;color:var(--muted);padding:8px 0;">No recent alerts</div>';
+    }
+  }
+
+  /* Weekly bars */
+  var wb=document.getElementById('dash-weekly-bars');
+  if(wb){
+    if(d&&d.weeklyBars&&d.weeklyBars.length){
+      var wh='';
+      for(var k=0;k<d.weeklyBars.length;k++){
+        var b=d.weeklyBars[k];
+        wh+='<div class="chart-bar" style="height:'+b.height+';background:'+b.bg+'"></div>';
+      }
+      wb.innerHTML=wh;
+    } else {
+      wb.innerHTML='';
+    }
+  }
+}
+
+function renderReports(){
+  var ch=getChild(currentViewId);
+  var d=ch&&ch.reportsData?ch.reportsData:null;
+
+  /* Stats row */
+  var sr=document.getElementById('reports-stats-row');
+  if(sr){
+    if(d){
+      sr.innerHTML=
+        '<div class="stat-card"><div class="stat-label">This Week</div><div class="stat-value" style="color:var(--accent2)">'+d.thisWeek+'</div><div class="stat-sub">Screen time total</div></div>'+
+        '<div class="stat-card"><div class="stat-label">Daily Average</div><div class="stat-value" style="color:var(--warn)">'+d.dailyAvg+'</div><div class="stat-sub">vs 3h 12m last week</div></div>'+
+        '<div class="stat-card"><div class="stat-label">Blocked</div><div class="stat-value" style="color:var(--danger)">'+d.blocked+'</div><div class="stat-sub">attempts this week</div></div>'+
+        '<div class="stat-card"><div class="stat-label">Most Used</div><div class="stat-value" style="font-size:16px;padding-top:6px">'+d.mostUsed+'</div><div class="stat-sub">'+d.mostUsedSub+'</div></div>';
+    } else {
+      sr.innerHTML='<div class="stat-card"><div class="stat-label">This Week</div><div class="stat-value" style="color:var(--muted)">—</div><div class="stat-sub">No data</div></div>'+
+        '<div class="stat-card"><div class="stat-label">Daily Average</div><div class="stat-value" style="color:var(--muted)">—</div><div class="stat-sub">No data</div></div>'+
+        '<div class="stat-card"><div class="stat-label">Blocked</div><div class="stat-value" style="color:var(--muted)">—</div><div class="stat-sub">No data</div></div>'+
+        '<div class="stat-card"><div class="stat-label">Most Used</div><div class="stat-value" style="color:var(--muted)">—</div><div class="stat-sub">No data</div></div>';
+    }
+  }
+
+  /* Chart bars */
+  var cb=document.getElementById('reports-chart-bars');
+  if(cb){
+    if(d&&d.chart&&d.chart.length){
+      var ch2='';
+      for(var i=0;i<d.chart.length;i++){
+        var bar=d.chart[i];
+        ch2+='<div class="chart-bar" style="height:'+bar.height+';background:'+bar.bg+'"></div>';
+      }
+      cb.innerHTML=ch2;
+    } else {
+      cb.innerHTML='';
+    }
+  }
+}
+
+/* ═══════════════════════════════════════════
+   TIMETABLE
+═══════════════════════════════════════════ */
+var ttActiveTaskIdx=null; /* which task row is expanded */
+var ttEditingIdx=null;    /* which task is being edited */
+
+function ttCalcDuration(sh,sm,sa,eh,em,ea){
+  var s=(parseInt(sh)%12)*60+parseInt(sm)+(sa==='PM'?720:0);
+  var e=(parseInt(eh)%12)*60+parseInt(em)+(ea==='PM'?720:0);
+  var diff=e-s;if(diff<0)diff+=1440;
+  var h=Math.floor(diff/60),m=diff%60;
+  if(h>0&&m>0)return h+'h '+m+'m';
+  if(h>0)return h+'h';
+  return m+'m';
+}
+function ttFmtTime(h,m,a){return parseInt(h)+':'+pZ(parseInt(m))+' '+a;}
+
+function renderTimetable(){
+  var con=document.getElementById('tt-task-list');if(!con)return;
+  var ch=getChild(currentViewId);
+  var tasks=ch&&ch.timetableData?ch.timetableData.tasks:[];
+  if(!tasks||!tasks.length){
+    con.innerHTML='<div style="font-size:13px;color:var(--muted);padding:8px 0;text-align:center;">No tasks added yet.</div>';
+    return;
+  }
+  var html='';
+  for(var i=0;i<tasks.length;i++){
+    var t=tasks[i];
+    var dur=ttCalcDuration(t.sh,t.sm,t.sa,t.eh,t.em,t.ea);
+    var expanded=(ttActiveTaskIdx===i);
+    html+=
+      '<div class="app-row" id="tt-row-'+i+'" style="cursor:pointer;" onclick="ttTaskClick('+i+')">' +
+        '<div class="v1-main">' +
+          '<div style="flex:1;min-width:0;">' +
+            '<div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:3px;">'+t.name+'</div>' +
+            '<div style="font-size:12px;">' +
+              '<span style="color:var(--accent);">'+ttFmtTime(t.sh,t.sm,t.sa)+'</span>' +
+              '<span style="color:var(--muted);"> – </span>' +
+              '<span style="color:var(--danger);">'+ttFmtTime(t.eh,t.em,t.ea)+'</span>' +
+            '</div>' +
+            '<div style="font-size:11px;color:var(--muted);margin-top:2px;">Duration: '+dur+'</div>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    if(expanded){
+      html+=
+        '<div style="display:flex;gap:8px;padding:6px 0 10px 0;border-bottom:1px solid var(--border);">' +
+          '<button class="btn btn-outline" style="flex:1;padding:9px;font-size:12px;color:var(--danger);border-color:var(--danger);" onclick="event.stopPropagation();deleteTask('+i+')">🗑 Delete</button>' +
+          '<button class="btn btn-outline" style="flex:1;padding:9px;font-size:12px;" onclick="event.stopPropagation();openEditTask('+i+')">✏️ Edit</button>' +
+        '</div>';
+    }
+  }
+  con.innerHTML=html;
+}
+
+function ttTaskClick(idx){
+  ttActiveTaskIdx=(ttActiveTaskIdx===idx)?null:idx;
+  renderTimetable();
+}
+
+function openAddTask(){
+  var inp=document.getElementById('tt-task-name');if(inp)inp.value='';
+  dialSetVal(document.getElementById('tt-sh'),VALS_H12,'9');
+  dialSetVal(document.getElementById('tt-sm'),VALS_MIN,'00');
+  ampmSet('tt-sa','AM','g');
+  dialSetVal(document.getElementById('tt-eh'),VALS_H12,'5');
+  dialSetVal(document.getElementById('tt-em'),VALS_MIN,'00');
+  ampmSet('tt-ea','PM','r');
+  openSheet('tt-add-sheet');
+}
+
+function saveTask(){
+  var ch=getChild(currentViewId);
+  if(!ch){showToast('No child selected',true);return;}
+  if(!ch.timetableData)ch.timetableData={tasks:[]};
+  var inp=document.getElementById('tt-task-name');
+  var name=(inp?inp.value.trim():'');
+  if(!name){if(inp)inp.focus();showToast('Please enter a task name',true);return;}
+  var task={
+    name:name,
+    sh:parseInt(dialRead(document.getElementById('tt-sh'),VALS_H12))||9,
+    sm:parseInt(dialRead(document.getElementById('tt-sm'),VALS_MIN))||0,
+    sa:ampmRead('tt-sa'),
+    eh:parseInt(dialRead(document.getElementById('tt-eh'),VALS_H12))||5,
+    em:parseInt(dialRead(document.getElementById('tt-em'),VALS_MIN))||0,
+    ea:ampmRead('tt-ea')
+  };
+  ch.timetableData.tasks.push(task);
+  ttActiveTaskIdx=null;
+  closeSheet('tt-add-sheet');
+  renderTimetable();
+  showToast('✓ Task saved');
+}
+
+function deleteTask(idx){
+  var ch=getChild(currentViewId);if(!ch||!ch.timetableData)return;
+  ch.timetableData.tasks.splice(idx,1);
+  ttActiveTaskIdx=null;
+  renderTimetable();
+  showToast('Task removed');
+}
+
+function openEditTask(idx){
+  var ch=getChild(currentViewId);if(!ch||!ch.timetableData)return;
+  var tasks=ch.timetableData.tasks;
+  if(idx<0||idx>=tasks.length)return;
+  var t=tasks[idx];
+  ttEditingIdx=idx;
+  var inp=document.getElementById('tt-edit-task-name');if(inp)inp.value=t.name;
+  dialSetVal(document.getElementById('tt-edit-sh'),VALS_H12,String(parseInt(t.sh)||9));
+  dialSetVal(document.getElementById('tt-edit-sm'),VALS_MIN,pZ(parseInt(t.sm)||0));
+  ampmSet('tt-edit-sa',t.sa||'AM','g');
+  dialSetVal(document.getElementById('tt-edit-eh'),VALS_H12,String(parseInt(t.eh)||5));
+  dialSetVal(document.getElementById('tt-edit-em'),VALS_MIN,pZ(parseInt(t.em)||0));
+  ampmSet('tt-edit-ea',t.ea||'PM','r');
+  openSheet('tt-edit-sheet');
+}
+
+function saveEditTask(){
+  if(ttEditingIdx===null)return;
+  var ch=getChild(currentViewId);if(!ch||!ch.timetableData)return;
+  var tasks=ch.timetableData.tasks;
+  if(ttEditingIdx<0||ttEditingIdx>=tasks.length)return;
+  var inp=document.getElementById('tt-edit-task-name');
+  var name=(inp?inp.value.trim():'');
+  if(!name){if(inp)inp.focus();showToast('Please enter a task name',true);return;}
+  tasks[ttEditingIdx]={
+    name:name,
+    sh:parseInt(dialRead(document.getElementById('tt-edit-sh'),VALS_H12))||9,
+    sm:parseInt(dialRead(document.getElementById('tt-edit-sm'),VALS_MIN))||0,
+    sa:ampmRead('tt-edit-sa'),
+    eh:parseInt(dialRead(document.getElementById('tt-edit-eh'),VALS_H12))||5,
+    em:parseInt(dialRead(document.getElementById('tt-edit-em'),VALS_MIN))||0,
+    ea:ampmRead('tt-edit-ea')
+  };
+  ttEditingIdx=null;
+  ttActiveTaskIdx=null;
+  closeSheet('tt-edit-sheet');
+  renderTimetable();
+  showToast('✓ Task updated');
+}
+
+
+function loadChildToDom(id){
+  var ch=getChild(id);if(!ch)return;
+  var sws=document.querySelectorAll('[data-sid]');for(var i=0;i<sws.length;i++){var sid=sws[i].getAttribute('data-sid');ch.switches[sid]?sws[i].classList.add('on'):sws[i].classList.remove('on');}
+  rebuildSitesList(ch.sites);
+  var t=document.getElementById('dash-title');if(t)t.textContent=ch.name+'\u2019s Dashboard';
+  /* Restore TTL main switch */
+  var ttlSw=document.getElementById('ttl-main-sw');
+  if(ttlSw){
+    var ttlOn=ch.totalTimeLimitData&&ch.totalTimeLimitData.enabled;
+    ttlOn?ttlSw.classList.add('on'):ttlSw.classList.remove('on');
+  }
+  /* Restore TCL main switch */
+  var tclSw=document.getElementById('tcl-main-sw');
+  if(tclSw){
+    var tclOn=ch.tclData&&ch.tclData.enabled;
+    tclOn?tclSw.classList.add('on'):tclSw.classList.remove('on');
+  }
+  /* Always collapse TCL sub-options when switching child */
+  var sub=document.getElementById('tcl-subopts');
+  if(sub)sub.style.display='none';
+  /* Reset timetable expanded state */
+  ttActiveTaskIdx=null;
+  ttEditingIdx=null;
+  /* Render per-child dashboard and reports */
+  renderDashboard();
+  renderReports();
+  renderTimetable();
+}
+function rebuildSitesList(sites){
+  var list=document.getElementById('blocked-sites-list'),addRow=document.getElementById('add-site-row');
+  if(!list)return;
+  var ex=list.querySelectorAll('.site-row');for(var i=0;i<ex.length;i++)ex[i].remove();
+  for(var j=0;j<sites.length;j++)list.insertBefore(makeSiteRow(sites[j]),addRow);
+}
+function makeSiteRow(name){
+  var r=document.createElement('div');r.className='site-row';
+  r.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--surface2);border-radius:8px;border:1px solid var(--border);margin-bottom:6px';
+  r.innerHTML='<div style="display:flex;align-items:center;gap:8px"><span>🔴</span><span class="site-name" style="font-size:13px">'+name+'</span></div><button class="btn btn-outline" style="padding:4px 10px;font-size:11px" onclick="removeSite(this)">Remove</button>';
+  return r;
+}
+function selectChildView(id){
+  if(currentViewId!==null)saveDomToChild(currentViewId);
+  currentViewId=id;loadChildToDom(id);renderHeader();renderAppList();renderSummaryCal();updateNoChildBanner();
+}
+function toggleChildActive(id){
+  var ch=getChild(id);if(!ch)return;var nv=!ch.active;
+  for(var i=0;i<children.length;i++)children[i].active=false;ch.active=nv;renderHeader();renderChildrenList();
+}
+function showAddChildForm(){document.getElementById('add-child-form').classList.add('show');document.getElementById('add-child-btn').style.display='none';document.getElementById('child-name-input').value='';document.getElementById('child-name-input').focus();}
+function hideAddChildForm(){document.getElementById('add-child-form').classList.remove('show');document.getElementById('add-child-btn').style.display='';}
+function confirmAddChild(){
+  var inp=document.getElementById('child-name-input'),name=inp.value.trim();if(!name){inp.focus();return;}
+  var ci=children.length%AVATAR_COLORS.length;
+  var ch={id:uidCounter++,name:name,active:false,color:AVATAR_COLORS[ci]};
+  var def=makeDefaultState();ch.switches=def.switches;ch.sites=def.sites;ch.appLimits=def.appLimits;ch.scheduleLimits=def.scheduleLimits;
+  ch.totalTimeLimitData=def.totalTimeLimitData;ch.tclData=def.tclData;ch.tclBlockAllData=def.tclBlockAllData;ch.tclBlockSpecificData=def.tclBlockSpecificData;
+  ch.dashData=def.dashData;ch.reportsData=def.reportsData;ch.timetableData=def.timetableData;
+  children.push(ch);hideAddChildForm();renderHeader();renderChildrenList();
+  if(currentViewId===null)selectChildView(ch.id);
+  updateNoChildBanner();
+  showToast('✓ Child "'+name+'" added');
+}
+function clickChildName(id){
+  var ch=getChild(id);if(!ch)return;pendingRemoveId=id;
+  document.getElementById('remove-child-label').textContent='Do you want to remove "'+ch.name+'"?';
+  document.getElementById('remove-overlay').classList.add('show');
+}
+function confirmRemoveChild(){
+  if(pendingRemoveId===null)return;var id=pendingRemoveId;
+  var ch=getChild(id);var name=ch?ch.name:'';
+  if(currentViewId===id){currentViewId=null;resetDomToBlank();}
+  children=children.filter(function(c){return c.id!==id;});pendingRemoveId=null;
+  document.getElementById('remove-overlay').classList.remove('show');
+  renderHeader();renderChildrenList();renderSummaryCal();
+  if(currentViewId===null&&children.length>0)selectChildView(children[0].id);
+  updateNoChildBanner();
+  if(name)showToast('Removed "'+name+'"');
+}
+function cancelRemoveChild(){pendingRemoveId=null;document.getElementById('remove-overlay').classList.remove('show');}
+function resetDomToBlank(){
+  var sws=document.querySelectorAll('[data-sid]');for(var i=0;i<sws.length;i++)sws[i].classList.remove('on');
+  rebuildSitesList([]);var t=document.getElementById('dash-title');if(t)t.textContent='Dashboard';
+  var ttlSw=document.getElementById('ttl-main-sw');if(ttlSw)ttlSw.classList.remove('on');
+  var tclSw=document.getElementById('tcl-main-sw');if(tclSw)tclSw.classList.remove('on');
+  var sub=document.getElementById('tcl-subopts');if(sub)sub.style.display='none';
+  renderDashboard();
+  renderReports();
+  renderTimetable();
+}
+function renderHeader(){
+  var sw=document.getElementById('child-switcher');if(!sw)return;sw.innerHTML='';
+  for(var i=0;i<children.length;i++){
+    var c=children[i];var pill=document.createElement('div');pill.className='h-pill'+(c.id===currentViewId?' selected':'');
+    pill.innerHTML='<div class="h-pill-name" onclick="selectChildView('+c.id+')"><div class="avatar" style="background:'+c.color+'">'+c.name.charAt(0).toUpperCase()+'</div><span class="pill-name">'+c.name+'</span></div><div class="mini-sw'+(c.active?' on':'')+'" onclick="toggleChildActive('+c.id+')"></div>';
+    sw.appendChild(pill);
+  }
+}
+function renderChildrenList(){
+  var list=document.getElementById('children-list');if(!list)return;list.innerHTML='';
+  if(children.length===0){list.innerHTML='<div class="empty-children"><div class="empty-icon">👶</div>No children added yet.<br>Tap "Add Children" to get started.</div>';return;}
+  for(var i=0;i<children.length;i++){
+    var c=children[i];var row=document.createElement('div');row.className='child-mgr-row';
+    row.innerHTML='<div class="child-mgr-left" onclick="clickChildName('+c.id+')"><div class="child-mgr-avatar" style="background:'+c.color+'">'+c.name.charAt(0).toUpperCase()+'</div><div><div class="child-mgr-name">'+c.name+'</div><div class="child-mgr-sub">Tap name to remove</div></div></div><div class="switch'+(c.active?' on':'')+'" onclick="toggleChildActive('+c.id+')"></div>';
+    list.appendChild(row);
+  }
+}
+
+/* ═══════════════════════════════════════════
+   NAVIGATION / MISC
+═══════════════════════════════════════════ */
+function navTo(el,sectionId){
+  var ni=document.querySelectorAll('.bottom-nav .nav-item');ni.forEach(function(n){n.classList.remove('active');});
+  if(el&&el.classList)el.classList.add('active');
+  var ss=document.querySelectorAll('.section');ss.forEach(function(s){s.classList.remove('active');});
+  var t=document.getElementById(sectionId);if(t)t.classList.add('active');
+  if(sectionId==='screentime')setTimeout(renderSummaryCal,0);
+}
+function toggleSwitch(el){el.classList.toggle('on');}
+function addSite(){var inp=document.getElementById('newsite');if(!inp)return;var v=inp.value.trim();if(!v)return;var list=document.getElementById('blocked-sites-list'),addRow=document.getElementById('add-site-row');if(!list)return;list.insertBefore(makeSiteRow(v),addRow);inp.value='';inp.focus();}
+function removeSite(btn){var r=btn.closest('.site-row');if(r)r.remove();}
+
+/* ═══════════════════════════════════════════
+   TOTAL TIME LIMIT
+═══════════════════════════════════════════ */
+var ttlPendingApps={};
+var ttlSnapshot=null;
+
+function openTotalTimeLimit(){
+  var ch=getChild(currentViewId);
+  if(!ch){autoCreateDefaultChild();ch=getChild(currentViewId);}
+  if(!ch.totalTimeLimitData)ch.totalTimeLimitData={saved:false,enabled:false,selectedApps:{},h:0,m:0,s:0};
+  ttlPendingApps={};
+  var savedApps=ch.totalTimeLimitData.selectedApps||{};
+  for(var id in savedApps)ttlPendingApps[id]=savedApps[id];
+  var h=parseInt(ch.totalTimeLimitData.h)||0;
+  var m=parseInt(ch.totalTimeLimitData.m)||0;
+  var s=parseInt(ch.totalTimeLimitData.s)||0;
+  dialSetVal(document.getElementById('ttl-h'),VALS_H24,pZ(h));
+  dialSetVal(document.getElementById('ttl-m'),VALS_MIN,pZ(m));
+  dialSetVal(document.getElementById('ttl-s'),VALS_SEC,pZ(s));
+  /* Snapshot what was loaded */
+  ttlSnapshot={h:h,m:m,s:s,apps:JSON.stringify(ttlPendingApps)};
+  renderTtlAppList();
+  openSheet('ttl-sheet');
+}
+
+function ttlHasChanged(){
+  if(!ttlSnapshot)return true;
+  var curH=parseInt(dialRead(document.getElementById('ttl-h'),VALS_H24))||0;
+  var curM=parseInt(dialRead(document.getElementById('ttl-m'),VALS_MIN))||0;
+  var curS=parseInt(dialRead(document.getElementById('ttl-s'),VALS_SEC))||0;
+  if(curH!==ttlSnapshot.h||curM!==ttlSnapshot.m||curS!==ttlSnapshot.s)return true;
+  if(JSON.stringify(ttlPendingApps)!==ttlSnapshot.apps)return true;
+  return false;
+}
+
+function renderTtlAppList(){
+  var con=document.getElementById('ttl-app-list');if(!con)return;
+  con.innerHTML='';
+  for(var i=0;i<APP_LIST.length;i++){
+    var a=APP_LIST[i];
+    var isSel=!!ttlPendingApps[a.id];
+    var row=document.createElement('div');
+    row.className='app-row'+(isSel?' blocked':'');
+    row.id='ttl-ar-'+a.id;
+    row.innerHTML=
+      '<div class="v1-main">'+
+        '<div class="v1-icon" style="background:'+a.bg+'">'+a.icon+'</div>'+
+        '<div class="v1-name">'+a.name+'</div>'+
+        '<div class="v1-actions">'+
+          '<button class="app-block-btn '+(isSel?'is-blocked':'unblocked')+'" onclick="toggleTtlApp(\''+a.id+'\')">'+(isSel?'✔':'✕')+'</button>'+
+        '</div>'+
+      '</div>';
+    con.appendChild(row);
+  }
+}
+
+function toggleTtlApp(appId){
+  ttlPendingApps[appId]=!ttlPendingApps[appId];
+  renderTtlAppList();
+}
+
+function saveTotalTimeLimit(){
+  var ch=getChild(currentViewId);
+  if(!ch){showToast('No child selected',true);return;}
+  if(!ch.totalTimeLimitData)ch.totalTimeLimitData={saved:false,enabled:false,selectedApps:{},h:0,m:0,s:0};
+  var alreadySaved=!!(ch.totalTimeLimitData.saved);
+  if(alreadySaved&&ttlHasChanged()){
+    pendingOverwriteCb=doSaveTotalTimeLimit;
+    openOverwrite();
+  } else {
+    doSaveTotalTimeLimit();
+  }
+}
+
+function doSaveTotalTimeLimit(){
+  var ch=getChild(currentViewId);if(!ch)return;
+  if(!ch.totalTimeLimitData)ch.totalTimeLimitData={saved:false,enabled:false,selectedApps:{},h:0,m:0,s:0};
+  ch.totalTimeLimitData.saved=true;
+  ch.totalTimeLimitData.h=parseInt(dialRead(document.getElementById('ttl-h'),VALS_H24))||0;
+  ch.totalTimeLimitData.m=parseInt(dialRead(document.getElementById('ttl-m'),VALS_MIN))||0;
+  ch.totalTimeLimitData.s=parseInt(dialRead(document.getElementById('ttl-s'),VALS_SEC))||0;
+  ch.totalTimeLimitData.selectedApps={};
+  for(var id in ttlPendingApps)ch.totalTimeLimitData.selectedApps[id]=ttlPendingApps[id];
+  closeSheet('ttl-sheet');
+  showToast('✓ Total time limit saved');
+}
+
+function toggleTtlMainSwitch(el){
+  el.classList.toggle('on');
+  var ch=getChild(currentViewId);
+  if(ch){
+    if(!ch.totalTimeLimitData)ch.totalTimeLimitData={enabled:false,selectedApps:{},h:0,m:30,s:0};
+    ch.totalTimeLimitData.enabled=el.classList.contains('on');
+  }
+}
+
+/* Placeholder — Part 2 will implement Total Clock Limit */
+function openTotalClockLimit(){
+  var sub=document.getElementById('tcl-subopts');
+  if(!sub)return;
+  var visible=sub.style.display==='flex';
+  sub.style.display=visible?'none':'flex';
+  sub.style.flexDirection='column';
+}
+
+var tclBaSnapshot=null;
+
+function openTclBlockAll(){
+  var ch=getChild(currentViewId);
+  if(!ch){autoCreateDefaultChild();ch=getChild(currentViewId);}
+  if(!ch.tclBlockAllData)ch.tclBlockAllData={sh:9,sm:0,sa:'AM',eh:5,em:0,ea:'PM'};
+  var d=ch.tclBlockAllData;
+  dialSetVal(document.getElementById('tcl-ba-sh'),VALS_H12,String(parseInt(d.sh)||9));
+  dialSetVal(document.getElementById('tcl-ba-sm'),VALS_MIN,pZ(parseInt(d.sm)||0));
+  ampmSet('tcl-ba-sa',d.sa||'AM','g');
+  dialSetVal(document.getElementById('tcl-ba-eh'),VALS_H12,String(parseInt(d.eh)||5));
+  dialSetVal(document.getElementById('tcl-ba-em'),VALS_MIN,pZ(parseInt(d.em)||0));
+  ampmSet('tcl-ba-ea',d.ea||'PM','r');
+  /* Snapshot what was loaded */
+  tclBaSnapshot={sh:parseInt(d.sh)||9,sm:parseInt(d.sm)||0,sa:d.sa||'AM',eh:parseInt(d.eh)||5,em:parseInt(d.em)||0,ea:d.ea||'PM'};
+  openSheet('tcl-ba-sheet');
+}
+
+function tclBaHasChanged(){
+  if(!tclBaSnapshot)return true;
+  var curSh=parseInt(dialRead(document.getElementById('tcl-ba-sh'),VALS_H12))||9;
+  var curSm=parseInt(dialRead(document.getElementById('tcl-ba-sm'),VALS_MIN))||0;
+  var curSa=ampmRead('tcl-ba-sa');
+  var curEh=parseInt(dialRead(document.getElementById('tcl-ba-eh'),VALS_H12))||5;
+  var curEm=parseInt(dialRead(document.getElementById('tcl-ba-em'),VALS_MIN))||0;
+  var curEa=ampmRead('tcl-ba-ea');
+  return(curSh!==tclBaSnapshot.sh||curSm!==tclBaSnapshot.sm||curSa!==tclBaSnapshot.sa||curEh!==tclBaSnapshot.eh||curEm!==tclBaSnapshot.em||curEa!==tclBaSnapshot.ea);
+}
+
+function saveTclBlockAll(){
+  var ch=getChild(currentViewId);
+  if(!ch){showToast('No child selected',true);return;}
+  var alreadySaved=!!(ch.tclBlockAllData&&ch.tclBlockAllData.saved);
+  if(alreadySaved&&tclBaHasChanged()){
+    pendingOverwriteCb=doSaveTclBlockAll;
+    openOverwrite();
+  } else {
+    doSaveTclBlockAll();
+  }
+}
+
+function doSaveTclBlockAll(){
+  var ch=getChild(currentViewId);if(!ch)return;
+  ch.tclBlockAllData={
+    saved:true,
+    sh:parseInt(dialRead(document.getElementById('tcl-ba-sh'),VALS_H12))||9,
+    sm:parseInt(dialRead(document.getElementById('tcl-ba-sm'),VALS_MIN))||0,
+    sa:ampmRead('tcl-ba-sa'),
+    eh:parseInt(dialRead(document.getElementById('tcl-ba-eh'),VALS_H12))||5,
+    em:parseInt(dialRead(document.getElementById('tcl-ba-em'),VALS_MIN))||0,
+    ea:ampmRead('tcl-ba-ea')
+  };
+  closeSheet('tcl-ba-sheet');
+  showToast('✓ Block all apps saved');
+}
+
+var tclBsPendingApps={};
+var tclBsSnapshot=null;
+
+function openTclBlockSpecific(){
+  var ch=getChild(currentViewId);
+  if(!ch){autoCreateDefaultChild();ch=getChild(currentViewId);}
+  if(!ch.tclBlockSpecificData)ch.tclBlockSpecificData={saved:false,selectedApps:{},sh:9,sm:0,sa:'AM',eh:5,em:0,ea:'PM'};
+  tclBsPendingApps={};
+  var savedApps=ch.tclBlockSpecificData.selectedApps||{};
+  for(var id in savedApps)tclBsPendingApps[id]=savedApps[id];
+  var d=ch.tclBlockSpecificData;
+  dialSetVal(document.getElementById('tcl-bs-sh'),VALS_H12,String(parseInt(d.sh)||9));
+  dialSetVal(document.getElementById('tcl-bs-sm'),VALS_MIN,pZ(parseInt(d.sm)||0));
+  ampmSet('tcl-bs-sa',d.sa||'AM','g');
+  dialSetVal(document.getElementById('tcl-bs-eh'),VALS_H12,String(parseInt(d.eh)||5));
+  dialSetVal(document.getElementById('tcl-bs-em'),VALS_MIN,pZ(parseInt(d.em)||0));
+  ampmSet('tcl-bs-ea',d.ea||'PM','r');
+  /* Snapshot what was loaded */
+  tclBsSnapshot={sh:parseInt(d.sh)||9,sm:parseInt(d.sm)||0,sa:d.sa||'AM',eh:parseInt(d.eh)||5,em:parseInt(d.em)||0,ea:d.ea||'PM',apps:JSON.stringify(tclBsPendingApps)};
+  renderTclBsAppList();
+  openSheet('tcl-bs-sheet');
+}
+
+function tclBsHasChanged(){
+  if(!tclBsSnapshot)return true;
+  var curSh=parseInt(dialRead(document.getElementById('tcl-bs-sh'),VALS_H12))||9;
+  var curSm=parseInt(dialRead(document.getElementById('tcl-bs-sm'),VALS_MIN))||0;
+  var curSa=ampmRead('tcl-bs-sa');
+  var curEh=parseInt(dialRead(document.getElementById('tcl-bs-eh'),VALS_H12))||5;
+  var curEm=parseInt(dialRead(document.getElementById('tcl-bs-em'),VALS_MIN))||0;
+  var curEa=ampmRead('tcl-bs-ea');
+  if(curSh!==tclBsSnapshot.sh||curSm!==tclBsSnapshot.sm||curSa!==tclBsSnapshot.sa||curEh!==tclBsSnapshot.eh||curEm!==tclBsSnapshot.em||curEa!==tclBsSnapshot.ea)return true;
+  if(JSON.stringify(tclBsPendingApps)!==tclBsSnapshot.apps)return true;
+  return false;
+}
+
+function renderTclBsAppList(){
+  var con=document.getElementById('tcl-bs-app-list');if(!con)return;
+  con.innerHTML='';
+  for(var i=0;i<APP_LIST.length;i++){
+    var a=APP_LIST[i];
+    var isSel=!!tclBsPendingApps[a.id];
+    var row=document.createElement('div');
+    row.className='app-row'+(isSel?' blocked':'');
+    row.id='tcl-bs-ar-'+a.id;
+    row.innerHTML=
+      '<div class="v1-main">'+
+        '<div class="v1-icon" style="background:'+a.bg+'">'+a.icon+'</div>'+
+        '<div class="v1-name">'+a.name+'</div>'+
+        '<div class="v1-actions">'+
+          '<button class="app-block-btn '+(isSel?'is-blocked':'unblocked')+'" onclick="toggleTclBsApp(\''+a.id+'\')">'+(isSel?'✔':'✕')+'</button>'+
+        '</div>'+
+      '</div>';
+    con.appendChild(row);
+  }
+}
+
+function toggleTclBsApp(appId){
+  tclBsPendingApps[appId]=!tclBsPendingApps[appId];
+  renderTclBsAppList();
+}
+
+function saveTclBlockSpecific(){
+  var ch=getChild(currentViewId);
+  if(!ch){showToast('No child selected',true);return;}
+  var alreadySaved=!!(ch.tclBlockSpecificData&&ch.tclBlockSpecificData.saved);
+  if(alreadySaved&&tclBsHasChanged()){
+    pendingOverwriteCb=doSaveTclBlockSpecific;
+    openOverwrite();
+  } else {
+    doSaveTclBlockSpecific();
+  }
+}
+
+function doSaveTclBlockSpecific(){
+  var ch=getChild(currentViewId);if(!ch)return;
+  if(!ch.tclBlockSpecificData)ch.tclBlockSpecificData={saved:false,selectedApps:{},sh:9,sm:0,sa:'AM',eh:5,em:0,ea:'PM'};
+  ch.tclBlockSpecificData.saved=true;
+  ch.tclBlockSpecificData.sh=parseInt(dialRead(document.getElementById('tcl-bs-sh'),VALS_H12))||9;
+  ch.tclBlockSpecificData.sm=parseInt(dialRead(document.getElementById('tcl-bs-sm'),VALS_MIN))||0;
+  ch.tclBlockSpecificData.sa=ampmRead('tcl-bs-sa');
+  ch.tclBlockSpecificData.eh=parseInt(dialRead(document.getElementById('tcl-bs-eh'),VALS_H12))||5;
+  ch.tclBlockSpecificData.em=parseInt(dialRead(document.getElementById('tcl-bs-em'),VALS_MIN))||0;
+  ch.tclBlockSpecificData.ea=ampmRead('tcl-bs-ea');
+  ch.tclBlockSpecificData.selectedApps={};
+  for(var id in tclBsPendingApps)ch.tclBlockSpecificData.selectedApps[id]=tclBsPendingApps[id];
+  closeSheet('tcl-bs-sheet');
+  showToast('✓ Block specific apps saved');
+}
+
+function toggleTclMainSwitch(el){
+  el.classList.toggle('on');
+  var ch=getChild(currentViewId);
+  if(ch){
+    if(!ch.tclData)ch.tclData={enabled:false};
+    ch.tclData.enabled=el.classList.contains('on');
+  }
+}
+
+/* ═══════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════ */
+window.addEventListener('load',function(){
+  /* Build all scroll dials */
+  dialBuild(document.getElementById('tl-h'),VALS_H24,'00');
+  dialBuild(document.getElementById('tl-m'),VALS_MIN,'30');
+  dialBuild(document.getElementById('tl-s'),VALS_SEC,'00');
+  dialBuild(document.getElementById('cl-sh'),VALS_H12,'9');
+  dialBuild(document.getElementById('cl-sm'),VALS_MIN,'00');
+  dialBuild(document.getElementById('cl-eh'),VALS_H12,'5');
+  dialBuild(document.getElementById('cl-em'),VALS_MIN,'00');
+  dialBuild(document.getElementById('dl-h'),VALS_H24,'00');
+  dialBuild(document.getElementById('dl-m'),VALS_MIN,'30');
+  dialBuild(document.getElementById('dl-s'),VALS_SEC,'00');
+  dialBuild(document.getElementById('dl-sh'),VALS_H12,'9');
+  dialBuild(document.getElementById('dl-sm'),VALS_MIN,'00');
+  dialBuild(document.getElementById('dl-eh'),VALS_H12,'5');
+  dialBuild(document.getElementById('dl-em'),VALS_MIN,'00');
+  dialBuild(document.getElementById('ttl-h'),VALS_H24,'00');
+  dialBuild(document.getElementById('ttl-m'),VALS_MIN,'30');
+  dialBuild(document.getElementById('ttl-s'),VALS_SEC,'00');
+  dialBuild(document.getElementById('tcl-ba-sh'),VALS_H12,'9');
+  dialBuild(document.getElementById('tcl-ba-sm'),VALS_MIN,'00');
+  dialBuild(document.getElementById('tcl-ba-eh'),VALS_H12,'5');
+  dialBuild(document.getElementById('tcl-ba-em'),VALS_MIN,'00');
+  dialBuild(document.getElementById('tcl-bs-sh'),VALS_H12,'9');
+  dialBuild(document.getElementById('tcl-bs-sm'),VALS_MIN,'00');
+  dialBuild(document.getElementById('tcl-bs-eh'),VALS_H12,'5');
+  dialBuild(document.getElementById('tcl-bs-em'),VALS_MIN,'00');
+  dialBuild(document.getElementById('tt-sh'),VALS_H12,'9');
+  dialBuild(document.getElementById('tt-sm'),VALS_MIN,'00');
+  dialBuild(document.getElementById('tt-eh'),VALS_H12,'5');
+  dialBuild(document.getElementById('tt-em'),VALS_MIN,'00');
+  dialBuild(document.getElementById('tt-edit-sh'),VALS_H12,'9');
+  dialBuild(document.getElementById('tt-edit-sm'),VALS_MIN,'00');
+  dialBuild(document.getElementById('tt-edit-eh'),VALS_H12,'5');
+  dialBuild(document.getElementById('tt-edit-em'),VALS_MIN,'00');
+
+  renderChildrenList();renderHeader();renderAppList();renderSummaryCal();
+  updateNoChildBanner();
+
+  /* Auto-create a default child so saves work immediately */
+  if(children.length===0){
+    var def0={id:uidCounter++,name:'My Child',active:true,color:AVATAR_COLORS[0]};
+    var s0=makeDefaultState();def0.switches=s0.switches;def0.sites=s0.sites;def0.appLimits=s0.appLimits;def0.scheduleLimits=s0.scheduleLimits;
+    def0.totalTimeLimitData=s0.totalTimeLimitData;def0.tclData=s0.tclData;def0.tclBlockAllData=s0.tclBlockAllData;def0.tclBlockSpecificData=s0.tclBlockSpecificData;
+    def0.dashData=s0.dashData;def0.reportsData=s0.reportsData;def0.timetableData=s0.timetableData;
+    children.push(def0);
+    selectChildView(def0.id);
+  }
+
+  var cni=document.getElementById('child-name-input');
+  if(cni)cni.addEventListener('keydown',function(e){if(e.key==='Enter')confirmAddChild();});
+  var si=document.getElementById('newsite');
+  if(si)si.addEventListener('keydown',function(e){if(e.key==='Enter')addSite();});
+});
+
+/* ═══════════════════════════════════════════
+   EXPOSE ALL FUNCTIONS TO GLOBAL SCOPE
+   Guarantees onclick= handlers work even if
+   Cloudflare or other scripts interfere
+═══════════════════════════════════════════ */
+window.navTo=navTo;
+window.toggleSwitch=toggleSwitch;
+window.addSite=addSite;
+window.removeSite=removeSite;
+window.openLimitPanel=openLimitPanel;
+window.toggleAppEnabled=toggleAppEnabled;
+window.removeAppLimit=removeAppLimit;
+window.toggleAppBlock=toggleAppBlock;
+window.openLimitEditor=openLimitEditor;
+window.openSchedLimit=openSchedLimit;
+window.removeSchedLimit=removeSchedLimit;
+window.toggleSchedBlock=toggleSchedBlock;
+window.applyTimeLimitToPending=applyTimeLimitToPending;
+window.applyClockLimitToPending=applyClockLimitToPending;
+window.saveDateSchedule=saveDateSchedule;
+window.doSaveDateSchedule=doSaveDateSchedule;
+window.confirmDateSave=confirmDateSave;
+window.cancelDateSave=cancelDateSave;
+window.saveTimeLimit=saveTimeLimit;
+window.saveClockLimit=saveClockLimit;
+window.saveDateLimit=saveDateLimit;
+window.openLimitSchedCal=openLimitSchedCal;
+window.lschedDateClick=lschedDateClick;
+window.openMainSchedCal=openMainSchedCal;
+window.mainSchedDateClick=mainSchedDateClick;
+window.closeDateSchedSheet=closeDateSchedSheet;
+window.summaryDateClick=summaryDateClick;
+window.npCalNav=npCalNav;
+window.ampmClick=ampmClick;
+window.buildDaySel=buildDaySel;
+window.openSheet=openSheet;
+window.closeSheet=closeSheet;
+window.confirmOverwrite=confirmOverwrite;
+window.cancelOverwrite=cancelOverwrite;
+window.selectChildView=selectChildView;
+window.toggleChildActive=toggleChildActive;
+window.showAddChildForm=showAddChildForm;
+window.hideAddChildForm=hideAddChildForm;
+window.confirmAddChild=confirmAddChild;
+window.clickChildName=clickChildName;
+window.confirmRemoveChild=confirmRemoveChild;
+window.cancelRemoveChild=cancelRemoveChild;
+window.openTotalTimeLimit=openTotalTimeLimit;
+window.toggleTtlApp=toggleTtlApp;
+window.ttlHasChanged=ttlHasChanged;
+window.saveTotalTimeLimit=saveTotalTimeLimit;
+window.toggleTtlMainSwitch=toggleTtlMainSwitch;
+window.openTotalClockLimit=openTotalClockLimit;
+window.toggleTclMainSwitch=toggleTclMainSwitch;
+window.openTclBlockAll=openTclBlockAll;
+window.tclBaHasChanged=tclBaHasChanged;
+window.saveTclBlockAll=saveTclBlockAll;
+window.doSaveTclBlockAll=doSaveTclBlockAll;
+window.openTclBlockSpecific=openTclBlockSpecific;
+window.tclBsHasChanged=tclBsHasChanged;
+window.renderTclBsAppList=renderTclBsAppList;
+window.toggleTclBsApp=toggleTclBsApp;
+window.saveTclBlockSpecific=saveTclBlockSpecific;
+window.doSaveTclBlockSpecific=doSaveTclBlockSpecific;
+window.openAddTask=openAddTask;
+window.saveTask=saveTask;
+window.deleteTask=deleteTask;
+window.openEditTask=openEditTask;
+window.saveEditTask=saveEditTask;
+window.ttTaskClick=ttTaskClick;
+</script>
+</body>
+</html>
