@@ -1,5 +1,5 @@
 # Parental-control-
-This is a parental control app.the full version isn't given only the UI is given. You can set app limit .a specific time limit for a specific app. And also set a schedule of which apps to allow and which apps to not allow. You can also set specific settings for your different children.
+This is a parental control app.you can track screen time . You can set clock limit and time limit.specific time limit and clock for each specific app ,And also set a schedule. You can also set specific settings for your each of your children. This app gives parents full control over every app ,and app control over each child 
 ![image alt](https://github.com/AayushSharma-coder/Parental-control-/blob/f1e8661ba38d766c1fd8dd73fdece191900dd07d/Parental%20control%20app%201.png)
 
 ![image alt](https://github.com/AayushSharma-coder/Parental-control-/blob/226b3f021dc01107b175927e59b8888f5eef83b8/Parental%20control%20app%203.png)
